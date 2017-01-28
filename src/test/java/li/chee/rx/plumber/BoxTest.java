@@ -1,6 +1,9 @@
 package li.chee.rx.plumber;
 
 import org.junit.Test;
+import rx.Observable;
+
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -40,8 +43,21 @@ public class BoxTest {
         assertEquals("context", box2.getContext(String.class));
     }
 
-
     @Test(expected = IllegalStateException.class)
     public void testIllegalSimpleBox() {
+    }
+
+    @Test
+    public void streamExample() {
+        Observable.from(new Integer[]{ 1, 2 })
+                .map(Box::wrap)
+                .map(Box.context("hello"))
+                .map( b -> b.copy(b.getValue()+1))
+                .map( b -> b.getContext(String.class)+" "+b.getValue())
+                .toList()
+                .subscribe( l -> {
+                    assertArrayEquals(new String[] { "hello 2", "hello 3"}, l.toArray());
+                });
+
     }
 }

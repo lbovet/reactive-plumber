@@ -1,5 +1,9 @@
 package li.chee.rx.plumber;
 
+import rx.functions.Func1;
+
+import java.util.function.Function;
+
 /**
  * An object wrapper with extensible context.
  */
@@ -33,8 +37,21 @@ public class Box<T> {
         }
     }
 
-    public <V> Box<V> copy(V item) {
-        return new Box<>(item, this.contextHolder);
+    public <V> Box<V> copy(V value) {
+        return new Box<>(value, this.contextHolder);
+    }
+
+    public static <V> Func1<Box<V>, Box<V>> context(Object context) {
+        return (Box<V> b) -> b.with(context);
+    }
+
+    public static <V> Box<V> wrap(V value) {
+        if(value instanceof Box) {
+            @SuppressWarnings("unchecked") Box<V> result = (Box<V>)value;
+            return result;
+        } else {
+            return new Box<>(value);
+        }
     }
 
     /**
