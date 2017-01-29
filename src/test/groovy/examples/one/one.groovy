@@ -1,10 +1,10 @@
-package examples.context
+package examples.one
 
-import static Domain.*
+import static Tools.*
 
 def data = pipe {
-    from input  \
-    map wrap  \
+    from input \
+    map wrap \
     map context("hello")
 }
 
@@ -20,7 +20,7 @@ def count = pipe {
 
 sink {
     from renderer \
-    concatWith count  \
+    concatWith count \
     doOnNext print
 }
 
