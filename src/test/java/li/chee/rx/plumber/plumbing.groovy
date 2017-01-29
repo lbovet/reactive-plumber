@@ -2,23 +2,32 @@ package li.chee.rx.plumber
 
 import io.reactivex.Flowable
 import io.reactivex.Single
+import io.reactivex.parallel.ParallelFlowable
+import io.reactivex.schedulers.Schedulers
 
-input = Flowable.fromArray(1, 2, 3, 4)
+input = Flowable.range(1, 4)
 def wrap = Box.&wrap
 def context = Box.&context
 def print = { System.out.println it }
-def render = { it.getContext(String.class) + " " + it.getValue() }
+def render = { it.getContext(String.class) + " " + Thread.currentThread().getName() + " " + it.getValue() }
 
-def Flowable read(it) { it }
+def Flowable from(it) { it }
 
 pipes = []
+sinks = []
 
-def start() {
+def done() {
     pipes.reverse().each { it.connect() }
+    i = Flowable.fromArray((Flowable[])sinks) map { it.last('').toFlowable() }
+    Flowable.merge(i).blockingLast();
 }
 
 def Flowable pipe(it) {
     result = it()
+    if (ParallelFlowable.isAssignableFrom(result.getClass())) {
+        result = result.sequential()
+    }
+    result = result.observeOn Schedulers.newThread()
     if (Flowable.isAssignableFrom(result.getClass())) {
         result = result.publish()
     } else if (Single.isAssignableFrom(result.getClass())) {
@@ -30,26 +39,41 @@ def Flowable pipe(it) {
     result
 }
 
+def sink(it) {
+    sinks.add pipe(it)
+}
+
+def ParallelFlowable parallel(Flowable it) {
+    it.parallel() runOn Schedulers.computation()
+}
+
 // ---------------------
 
 def data = pipe {
-    read input  \
+    from input  \
     map wrap  \
-    map context("hello")  \
-    map render
+    map context("hello")
+}
+
+def renderer = pipe {
+    parallel from(data) \
+    map render \
 }
 
 def count = pipe {
-    read data  \
+    from renderer \
     count()
 }
 
-pipe {
-    read data  \
+sink {
+    from renderer \
     concatWith count  \
-    subscribe print
+    doOnNext print
 }
 
-// ----------------------
+sink {
+    from renderer \
+    doOnNext { System.out.println "hello" }
+}
 
-start()
+done()
