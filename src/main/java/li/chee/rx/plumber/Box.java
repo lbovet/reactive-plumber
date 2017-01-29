@@ -1,8 +1,6 @@
 package li.chee.rx.plumber;
 
-import rx.functions.Func1;
-
-import java.util.function.Function;
+import io.reactivex.functions.Function;
 
 /**
  * An object wrapper with extensible context.
@@ -26,7 +24,11 @@ public class Box<T> {
     }
 
     public <V> V getContext(Class<? extends V> clazz) {
-        return contextHolder.get(clazz);
+        if(contextHolder != null) {
+            return contextHolder.get(clazz);
+        } else {
+            throw new IllegalStateException("No context defined for this box");
+        }
     }
 
     public <C> Box<T> with(C context) {
@@ -41,7 +43,7 @@ public class Box<T> {
         return new Box<>(value, this.contextHolder);
     }
 
-    public static <V> Func1<Box<V>, Box<V>> context(Object context) {
+    public static <V> Function<Box<V>, Box<V>> context(Object context) {
         return (Box<V> b) -> b.with(context);
     }
 
@@ -81,5 +83,10 @@ public class Box<T> {
                 throw new IllegalStateException("There is no  "+clazz.getSimpleName()+" in the context chain");
             }
         }
+    }
+
+    @Override
+    public String toString() {
+        return item.toString();
     }
 }

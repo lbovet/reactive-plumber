@@ -1,9 +1,7 @@
 package li.chee.rx.plumber;
 
+import io.reactivex.Flowable;
 import org.junit.Test;
-import rx.Observable;
-
-import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -44,12 +42,21 @@ public class BoxTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testIllegalSimpleBox() {
+    public void testSimpleBoxWithoutContext() {
+        Box<String> box = new Box<>("hello");
+        box.getContext(String.class);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testUnknownContext() {
+        Box<String> box = new Box<>("hello");
+        box = box.with("context");
+        box.getContext(Integer.class);
     }
 
     @Test
     public void streamExample() {
-        Observable.from(new Integer[]{ 1, 2 })
+        Flowable.fromArray(new Integer[]{ 1, 2 })
                 .map(Box::wrap)
                 .map(Box.context("hello"))
                 .map( b -> b.copy(b.getValue()+1))
