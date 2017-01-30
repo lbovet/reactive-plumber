@@ -58,7 +58,7 @@ public class BoxTest {
     public void streamExample() {
         Flowable.fromArray(new Integer[]{ 1, 2 })
                 .map(Box::wrap)
-                .map(Box.context("hello"))
+                .map( b -> b.with("hello"))
                 .map( b -> b.copy(b.getValue()+1))
                 .map( b -> b.getContext(String.class)+" "+b.getValue())
                 .toList()

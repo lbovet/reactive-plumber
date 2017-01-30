@@ -13,8 +13,11 @@ import java.util.concurrent.CountDownLatch
 class Plumbing {
 
     // The plumbing to remember
-    private static pipes = []
+    private static connectables = []
     private static sinks = []
+
+    static wrap = Box.&wrap
+    static attach = Box.&attach
 
     /**
      * Resolves a source. It can be a Flowable or a function returning a Flowable.
@@ -22,10 +25,10 @@ class Plumbing {
      * @return a Flowable
      */
     static Flowable from(it) {
-        if (Flowable.isAssignableFrom(it.getClass())) {
-            it
-        } else {
+        if (Closure.isAssignableFrom(it.getClass())) {
             it()
+        } else {
+            it
         }
     }
 
@@ -36,8 +39,8 @@ class Plumbing {
      * @param a closure
      * @return a ConnectableFlowable
      */
-    static Flowable pipe(it) {
-        def result = it()
+    static pipe(input, block) {
+        def result = block(input)
         if (ParallelFlowable.isAssignableFrom(result.getClass())) {
             result = result.sequential()
         }
@@ -49,12 +52,12 @@ class Plumbing {
         } else {
             return null
         }
-        pipes.add result
+        connectables.add result
         result
     }
 
-    static ParallelFlowable parallel(Flowable it) {
-        it.parallel() runOn Schedulers.computation()
+    static ParallelFlowable parallel(input) {
+        input.parallel().runOn(Schedulers.computation())
     }
 
     /**
@@ -62,8 +65,8 @@ class Plumbing {
      * @param a closure
      * @return nothing
      */
-    static sink(it) {
-        sinks.add pipe(it)
+    static sink(input, closure) {
+        sinks.add pipe(input, closure)
     }
 
     /**
@@ -72,10 +75,10 @@ class Plumbing {
      * @return nothing
      */
     static done() {
-        CountDownLatch latch = new CountDownLatch(sinks.size())
+        def latch = new CountDownLatch(sinks.size())
         def lasts = Flowable.fromIterable((Iterable<Flowable>) sinks) map { it.last('-').toFlowable() }
         Flowable.merge(lasts).subscribe { latch.countDown() }
-        pipes.reverse().each { it.connect() }
+        connectables.reverse().each { it.connect() }
         latch.await()
     }
 }

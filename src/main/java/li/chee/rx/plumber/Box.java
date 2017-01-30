@@ -1,6 +1,7 @@
 package li.chee.rx.plumber;
 
-import io.reactivex.functions.Function;
+import io.reactivex.Flowable;
+import io.reactivex.FlowableTransformer;
 
 /**
  * An object wrapper with extensible context.
@@ -43,8 +44,8 @@ public class Box<T> {
         return new Box<>(value, this.contextHolder);
     }
 
-    public static <V> Function<Box<V>, Box<V>> context(Object context) {
-        return (Box<V> b) -> b.with(context);
+    public static <T, C> FlowableTransformer<Box<T>, Box<T>> attach(Flowable<C> contextFlow) {
+        return (f) -> f.zipWith(contextFlow.firstElement().cache().repeat(), Box::with);
     }
 
     public static <V> Box<V> wrap(V value) {

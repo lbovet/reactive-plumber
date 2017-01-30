@@ -2,31 +2,31 @@ package examples.one
 
 import static Tools.*
 
-def data = pipe {
-    from input \
-    map wrap \
-    map context("hello")
+def data = pipe (input) {
+    from it map wrap
 }
 
-def renderer = pipe {
-    parallel from(data) \
-    map render \
+def renderer = pipe (data) {
+    parallel from(it) map renderThread
 }
 
-def count = pipe {
-    from renderer \
-    count()
+def count = pipe (data) {
+    from it count()
 }
 
-sink {
-    from renderer \
-    concatWith count \
-    doOnNext print
+def printer = {
+    from it doOnNext print
 }
 
-sink {
-    from renderer \
-    doOnNext { System.out.println "hello" }
+sink (data) {
+    from it \
+    compose attach(count) \
+    map renderSize \
+    to printer
+}
+
+sink (renderer) {
+    from it to printer
 }
 
 done()

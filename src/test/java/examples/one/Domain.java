@@ -16,8 +16,11 @@ public class Domain {
         System.out.println(it);
     }
 
-    public static <T> String render(Box<T> box) {
-        return box.getContext(String.class) + " " +
-                Thread.currentThread().getName() + " " + box.getValue();
+    public static <T> Box<String> renderThread(Box<T> box) throws InterruptedException {
+        return Box.wrap(box.getValue() + " ["+Thread.currentThread().getName() +"]");
+    }
+
+    public static <T> Box<String> renderSize(Box<T> box) {
+        return Box.wrap(box.getValue() + " / " + box.getContext(Long.class));
     }
 }
