@@ -5,6 +5,8 @@ import io.reactivex.Single
 import io.reactivex.parallel.ParallelFlowable
 import io.reactivex.schedulers.Schedulers
 
+import java.util.concurrent.CountDownLatch
+
 /**
  * Base piping tools.
  */
@@ -39,7 +41,7 @@ class Plumbing {
         if (ParallelFlowable.isAssignableFrom(result.getClass())) {
             result = result.sequential()
         }
-        result = result.observeOn Schedulers.newThread()
+        //result = result.observeOn Schedulers.newThread()
         if (Flowable.isAssignableFrom(result.getClass())) {
             result = result.publish()
         } else if (Single.isAssignableFrom(result.getClass())) {
@@ -70,8 +72,10 @@ class Plumbing {
      * @return nothing
      */
     static done() {
+        CountDownLatch latch = new CountDownLatch(sinks.size())
+        def lasts = Flowable.fromIterable((Iterable<Flowable>) sinks) map { it.last('-').toFlowable() }
+        Flowable.merge(lasts).subscribe { latch.countDown() }
         pipes.reverse().each { it.connect() }
-        def i = Flowable.fromArray((Flowable[])sinks) map { it.last('').toFlowable() }
-        Flowable.merge(i).blockingLast();
+        latch.await()
     }
 }
