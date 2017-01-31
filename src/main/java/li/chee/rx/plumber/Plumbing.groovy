@@ -95,6 +95,21 @@ abstract class Plumbing extends Flowable {
         return { Flowable f -> f.map( { Box box -> box.with(fn(box)) }).groupBy(fn) }
     }
 
+    /**
+     * Split a flowable according to a list of predicates
+     * @param predicates
+     * @param f the flowable to split
+     * @return
+     */
+    static split(predicates, f) {
+        predicates.collect { predicate -> f.filter(predicate) }
+    }
+
+    /**
+     * Function to set the context of a box to the key of a grouped flowable.
+     * @param flowable
+     * @return
+     */
     static context(flowable) {
         return { Object it ->
             Box box
