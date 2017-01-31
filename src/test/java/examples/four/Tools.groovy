@@ -1,6 +1,8 @@
-package examples.three
+package examples.four
 
 import io.reactivex.Flowable
+import io.reactivex.flowables.GroupedFlowable
+import io.reactivex.functions.Function
 import li.chee.rx.plumber.Box
 import li.chee.rx.plumber.Plumbing
 
@@ -8,23 +10,14 @@ abstract class Tools extends Plumbing {
 
     static input = Flowable.range(1, 15).map Box.&wrap
 
-    static print = { Box box ->
-        def context = box.getContext(FizzBuzz.class)
-        println context == FizzBuzz.NONE ? box.getValue() : context
-    }
-
-    def static with(value) {
-        { it -> new Box(it).with(value) }
-    }
+    static enum FizzBuzz { NONE, FIZZ, BUZZ, FIZZBUZZ }
 
     static fizzbuzz = { Box box ->
         def fizz = box.getValue() % 3 == 0
         def buzz = box.getValue() % 5 == 0
         def both = fizz && buzz
-        box.with( both ? FizzBuzz.FIZZBUZZ: fizz ? FizzBuzz.FIZZ : buzz ? FizzBuzz.BUZZ : FizzBuzz.NONE )
+        both ? FizzBuzz.FIZZBUZZ: fizz ? FizzBuzz.FIZZ : buzz ? FizzBuzz.BUZZ : FizzBuzz.NONE
     }
-
-    static context = { Box box -> box.getContext(FizzBuzz.class) }
 
     static stats = { Box box ->
         if(box.getContext(FizzBuzz.class) != FizzBuzz.NONE) {
@@ -32,5 +25,8 @@ abstract class Tools extends Plumbing {
         }
     }
 
-    static enum FizzBuzz { NONE, FIZZ, BUZZ, FIZZBUZZ }
+    static myCount = {
+        it.count().toFlowable()
+    }
+
 }

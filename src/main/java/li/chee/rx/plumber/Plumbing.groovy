@@ -2,83 +2,108 @@ package li.chee.rx.plumber
 
 import io.reactivex.Flowable
 import io.reactivex.Single
+import io.reactivex.flowables.GroupedFlowable
 import io.reactivex.parallel.ParallelFlowable
 import io.reactivex.schedulers.Schedulers
-
-import java.util.concurrent.CountDownLatch
 
 /**
  * Base piping tools.
  */
-class Plumbing {
+abstract class Plumbing extends Flowable {
 
-    // The plumbing to remember
-    private static connectables = []
-    private static sinks = []
-
+    // Box utilities
     static wrap = Box.&wrap
     static attach = Box.&attach
 
     /**
-     * Resolves a source. It can be a Flowable or a function returning a Flowable.
-     * @param it
-     * @return a Flowable
+     * Resolves a source. It can be a Flowable or a closure returning a Flowable.
+     * @param it the source or its generating function.
+     * @return te Flowable
      */
     static Flowable from(it) {
-        if (Closure.isAssignableFrom(it.getClass())) {
-            it()
-        } else {
-            it
-        }
+        Closure.isAssignableFrom(it.getClass()) ? it() :it
     }
 
     /**
-     * Builds a ConnectableFlowable from a closure result. Tranforms Flowables and Singles.
-     * Teminates parallelized Flowables.
-     * This also registers the ConnectableFlowable for being connected on done().
-     * @param a closure
-     * @return a ConnectableFlowable
+     * Extract the GroupedFlowable key.
+     * @param it
+     * @return the key
      */
-    static pipe(input, block) {
-        def result = block(input)
+    static key(it) {
+        it.getKey()
+    }
+
+    /**
+     * Composes a Flowable from a closure that returns a Flowable or a Single.
+     * It also sequentializes parallelized Flowables.
+     * @param input a a closure
+     * @param a closure
+     * @return a Flowable
+     */
+    static Flowable pipe(Closure closure) {
+        def result = closure()
         if (ParallelFlowable.isAssignableFrom(result.getClass())) {
             result = result.sequential()
         }
-        //result = result.observeOn Schedulers.newThread()
-        if (Flowable.isAssignableFrom(result.getClass())) {
-            result = result.publish()
-        } else if (Single.isAssignableFrom(result.getClass())) {
-            result = result.toFlowable().publish()
-        } else {
-            return null
+        result = result.subscribeOn Schedulers.newThread()
+        if (Single.isAssignableFrom(result.getClass())) {
+            result = result.toFlowable()
         }
-        connectables.add result
         result
     }
 
+    /**
+     * Parallelizes processing on the computation scheduler.
+     * @param input a flowable to parallelize
+     * @return the parallelized flowable
+     */
     static ParallelFlowable parallel(input) {
         input.parallel().runOn(Schedulers.computation())
     }
 
     /**
-     * A terminal pipe. It will be registered so that the main thread will wait on it to be terminated.
-     * @param a closure
-     * @return nothing
+     * Takes a flowable of flowables and apply a pipe to all one.
+     *
+     * @param streams
+     * @param closure
+     * @return
      */
-    static sink(input, closure) {
-        sinks.add pipe(input, closure)
+    static all(Flowable streams, Closure closure ) {
+        return {
+            streams.map { f ->
+                pipe { closure(f) }
+            }
+        }
     }
 
     /**
-     * Connects the registered pipes in reverse order of declaration.
-     * Also observe the sinks to wait blockingly on their last item so that the process does not terminate too early.
+     * Marks pipes to be terminal, so that they get subscribed in a blocking way to avoid exiting before finishing work.
+     * @param pipes the terminal pipes
      * @return nothing
      */
-    static done() {
-        def latch = new CountDownLatch(sinks.size())
-        def lasts = Flowable.fromIterable((Iterable<Flowable>) sinks) map { it.last('-').toFlowable() }
-        Flowable.merge(lasts).subscribe { latch.countDown() }
-        connectables.reverse().each { it.connect() }
-        latch.await()
+    static sink(Flowable... pipes) {
+        def lasts = fromIterable(pipes.toList()) map { it.last('').toFlowable() }
+        merge(lasts).blockingLast()
+    }
+
+    /**
+     * Groups by a function returning a context and also add a mapper setting the context.
+     * @param fn function returning a context
+     * @return a grouped flowable
+     */
+    static groups(fn) {
+        return { Flowable f -> f.map( { Box box -> box.with(fn(box)) }).groupBy(fn) }
+    }
+
+    static context(flowable) {
+        return { Object it ->
+            Box box
+            if (it instanceof Box) {
+                box = it
+            } else {
+                box = new Box(it)
+            }
+            return box.with(((GroupedFlowable)flowable).getKey())
+        }
     }
 }

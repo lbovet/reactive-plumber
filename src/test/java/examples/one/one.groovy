@@ -2,31 +2,29 @@ package examples.one
 
 import static Tools.*
 
-def data = pipe (input) {
-    from it map wrap
+def data = pipe {
+    from input map wrap
 }
 
-def renderer = pipe (data) {
-    parallel from(it) map renderThread
+def renderer = pipe {
+    parallel from(data) map renderThread
 }
 
-def count = pipe (data) {
-    from it count()
+def count = pipe {
+    from data count()
 }
 
 def printer = {
     from it doOnNext print
 }
 
-sink (data) {
-    from it \
+sink \
+pipe {
+    from data \
     compose attach(count) \
     map renderSize \
     to printer
+}, pipe {
+    from renderer to printer
 }
 
-sink (renderer) {
-    from it to printer
-}
-
-done()

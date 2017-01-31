@@ -2,23 +2,29 @@ package examples.three
 
 import static Tools.*
 
-def marked = pipe (input) {
-    from it \
-    map parity
+def numbers = pipe {
+    from input \
+    map fizzbuzz
 }
 
-sink (marked) {
+def groups = pipe {
+    from numbers \
+    groupBy context
+}
+
+def counts = pipe all(groups) {
     from it \
-    filter context(Parity.EVEN) \
     count() \
-    doOnSuccess print
+    map with(key(it))
 }
 
-sink (marked) {
-    from it \
-    filter context(Parity.ODD) \
-    count() \
-    doOnSuccess print
+sink \
+pipe {
+    from concat(counts) \
+    doOnNext stats
+},
+pipe {
+    from numbers \
+    doOnNext print \
+    doOnComplete { println "---"}
 }
-
-done()

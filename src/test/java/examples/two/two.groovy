@@ -1,28 +1,28 @@
 package examples.two
 
-import io.reactivex.Flowable
-
 import static Tools.*
 
-def marked = pipe (input) {
-    from it \
-    map parity
+def marked = pipe {
+    from input \
+    map parity \
 }
 
-def even = pipe (marked) {
-    from it \
-    filter context(Parity.EVEN) \
-    count()
+def even = pipe {
+    from marked \
+    filter context(EVEN) \
+    count() \
+    map with(EVEN)
 }
 
-def odd = pipe (marked) {
-    from it \
-    filter context(Parity.ODD) \
-    count()
+def odd = pipe {
+    from marked \
+    filter context(ODD)\
+    count() \
+    map with(ODD)
 }
 
-sink( Flowable.concat(even, odd)) {
-    from it doOnNext print
+sink pipe {
+    from concat(even, odd) doOnNext print
 }
 
-done()
+
