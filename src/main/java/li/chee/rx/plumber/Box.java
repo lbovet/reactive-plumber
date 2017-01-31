@@ -44,7 +44,7 @@ public class Box<T> {
         return new Box<>(value, this.contextHolder);
     }
 
-    public static <T, C> FlowableTransformer<Box<T>, Box<T>> attach(Flowable<C> contextFlow) {
+    public static <T> FlowableTransformer<Box<T>, Box<T>> attach(Flowable contextFlow) {
         return (f) -> f.zipWith(contextFlow.firstElement().cache().repeat(), Box::with);
     }
 
@@ -55,6 +55,10 @@ public class Box<T> {
         } else {
             return new Box<>(value);
         }
+    }
+
+    public static <V> V unwrap(Box<V> box) {
+        return box.getValue();
     }
 
     /**

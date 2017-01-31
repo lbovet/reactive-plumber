@@ -1,8 +1,6 @@
 package examples.four
 
 import io.reactivex.Flowable
-import io.reactivex.flowables.GroupedFlowable
-import io.reactivex.functions.Function
 import li.chee.rx.plumber.Box
 import li.chee.rx.plumber.Plumbing
 

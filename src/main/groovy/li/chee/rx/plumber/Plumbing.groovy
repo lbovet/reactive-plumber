@@ -13,6 +13,7 @@ abstract class Plumbing extends Flowable {
 
     // Box utilities
     static wrap = Box.&wrap
+    static unwrap = Box.&unwrap
     static attach = Box.&attach
 
     /**
