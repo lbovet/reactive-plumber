@@ -2,6 +2,7 @@ package li.chee.rx.plumber;
 
 import io.reactivex.Flowable;
 import io.reactivex.FlowableTransformer;
+import io.reactivex.functions.Function;
 
 /**
  * An object wrapper with extensible context.
@@ -57,6 +58,32 @@ public class Box<T> {
         }
     }
 
+    public <U> Box<U> map(Function<T, U> f) throws Exception {
+        return copy(f.apply(getValue()));
+    }
+
+    public static <U,V> Function<Box<U>, Box<V>> mapper(final Function<U, V> f) {
+        return box -> box.map(f);
+    }
+
+    public <U> Box<U> flatMap(Function<T, Box<U>> f) throws Exception {
+        Box<U> added = f.apply(getValue());
+        if(added.contextHolder != null) {
+            if(this.contextHolder != null) {
+                added.contextHolder.append(this.contextHolder);
+            }
+        } else {
+            if(this.contextHolder != null) {
+                added.contextHolder = this.contextHolder;
+            }
+        }
+        return added;
+    }
+
+    public static <U,V> Function<Box<U>, Box<V>> binder(final Function<U, Box<V>> f) {
+        return box -> box.flatMap(f);
+    }
+
     public static <V> V unwrap(Box<V> box) {
         return box.getValue();
     }
@@ -69,11 +96,11 @@ public class Box<T> {
         private T value;
         private ContextHolder<?> inner;
 
-        public ContextHolder(T value) {
+        ContextHolder(T value) {
             this.value = value;
         }
 
-        public ContextHolder(T value, ContextHolder inner) {
+        ContextHolder(T value, ContextHolder inner) {
             this.value = value;
             this.inner = inner;
         }
@@ -88,10 +115,27 @@ public class Box<T> {
                 throw new IllegalStateException("There is no  "+clazz.getSimpleName()+" in the context chain");
             }
         }
+
+        void append(ContextHolder<?> contextHolder) {
+            if(inner == null) {
+                inner = contextHolder;
+            } else {
+                inner.append(contextHolder);
+            }
+        }
+
+        public String toString() {
+            String result = value.toString();
+            if(inner != null) {
+                result = result + "," + inner.toString();
+            }
+            return result;
+        }
     }
 
     @Override
     public String toString() {
-        return item.toString();
+        return "["+item.toString()+"|"+
+                (contextHolder != null? contextHolder.toString() : "")+"]";
     }
 }
