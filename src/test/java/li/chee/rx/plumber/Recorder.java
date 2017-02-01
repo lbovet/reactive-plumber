@@ -15,7 +15,7 @@ public abstract class Recorder implements Runnable {
         send("", event);
     }
 
-    private void send(String category, Object event) throws Exception {
+    public void send(String category, Object event) throws Exception {
         sender(category).accept(event);
     }
 
