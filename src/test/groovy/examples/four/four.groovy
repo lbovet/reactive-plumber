@@ -7,7 +7,7 @@ def categories = pipe {
     to groups(fizzbuzz)
 }
 
-def counts = pipe all(categories) {
+def counts = pipe each(categories) {
     from it \
     count() \
     map context(it)

@@ -12,7 +12,7 @@ def groups = pipe {
     groupBy context
 }
 
-def counts = pipe all(groups) {
+def counts = pipe each(groups) {
     from it \
     count() \
     map with(key(it))

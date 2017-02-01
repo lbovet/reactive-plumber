@@ -63,13 +63,13 @@ abstract class Plumbing extends Flowable {
     }
 
     /**
-     * Takes a flowable of flowables and apply a pipe to all one.
+     * Takes a flowable of flowables and apply a pipe to each one.
      *
      * @param streams
      * @param closure
      * @return
      */
-    static all(Flowable streams, Closure closure ) {
+    static each(Flowable streams, Closure closure ) {
         return {
             streams.map { f ->
                 pipe { closure(f) }
