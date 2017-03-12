@@ -8,15 +8,19 @@ def data = pipe {
 
 def (strings, numbers) = split(types, data)
 
-sink pipe {
+def stringPrint = pipe {
     from strings \
-    reduce("strings",line) \
-    doOnSuccess print
-}, pipe {
-    from numbers \
-    reduce("numbers",line) \
+    reduce("strings", line) \
     doOnSuccess print
 }
+
+def numberPrint = pipe {
+    from numbers \
+    reduce("numbers", line) \
+    doOnSuccess print
+}
+
+sink stringPrint, numberPrint
 
 
 

@@ -25,8 +25,7 @@ def statistics = pipe {
 
 def output = pipe {
     from numbers \
-    doOnNext print \
-    doOnComplete { println "---"}
+    doOnNext print
 }
 
 sink statistics, output

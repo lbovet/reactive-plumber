@@ -13,7 +13,9 @@ def counts = pipe each(categories) {
     map context(it)
 }
 
-sink pipe {
+def statistics = pipe {
     from concat(counts) \
     doOnNext stats
 }
+
+sink statistics

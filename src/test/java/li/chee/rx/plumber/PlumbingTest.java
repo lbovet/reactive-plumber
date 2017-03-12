@@ -40,4 +40,15 @@ public class PlumbingTest {
         Object result = new Runtime().run(new String(Files.readAllBytes(Paths.get("src/test/groovy/examples/three/three.groovy"))));
         assertEquals('[', result.toString().charAt(0));
     }
+
+    @Test
+    public void testRuntimeFour() throws IOException {
+        Object result = new Runtime().run(new String(Files.readAllBytes(Paths.get("src/test/groovy/examples/four/four.groovy"))));
+        assertEquals('[', result.toString().charAt(0));
+    }
+
+    @Test
+    public void testRuntimeFive() throws IOException {
+        Object result = new Runtime().run(new String(Files.readAllBytes(Paths.get("src/test/groovy/examples/five/five.groovy"))));
+    }
 }
