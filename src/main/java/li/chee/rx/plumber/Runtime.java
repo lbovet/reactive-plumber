@@ -3,6 +3,7 @@ package li.chee.rx.plumber;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 import guru.nidi.graphviz.engine.Graphviz;
+import guru.nidi.graphviz.model.*;
 import org.codehaus.groovy.ast.ClassNode;
 import org.codehaus.groovy.ast.CodeVisitorSupport;
 import org.codehaus.groovy.ast.Parameter;
@@ -16,11 +17,17 @@ import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.SourceUnit;
 import org.codehaus.groovy.control.customizers.CompilationCustomizer;
 import org.kohsuke.graphviz.*;
+import org.kohsuke.graphviz.Graph;
+import org.kohsuke.graphviz.Node;
 import org.kohsuke.graphviz.Shape;
 
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -302,11 +309,15 @@ public class Runtime {
                         return subGraph;
                     }
                 });
-
-                // graph.generateTo(Arrays.asList("dot", "-Tpng"), new File("target/graph.png"));
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
                 graph.writeTo(out);
-                Graphviz.fromString(out.toString()).renderToFile(new File("target/graph.png"));
+                Graphviz g = Graphviz.fromString(out.toString());
+                g.renderToFile(new File("target/graph.png"));
+                try {
+                    Files.write(Paths.get("target/graph.svg"), g.createSvg().getBytes(Charset.forName("UTF8")));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
 
             private String html(String s) {
