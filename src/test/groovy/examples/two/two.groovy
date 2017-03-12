@@ -25,6 +25,6 @@ def result = pipe {
     from concat(even, odd) doOnNext print
 }
 
-sink result
+drain result
 
 

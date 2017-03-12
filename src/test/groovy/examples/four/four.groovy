@@ -18,4 +18,4 @@ def statistics = pipe {
     doOnNext stats
 }
 
-sink statistics
+drain statistics

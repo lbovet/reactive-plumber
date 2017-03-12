@@ -28,4 +28,4 @@ def output = pipe {
     doOnNext print
 }
 
-sink statistics, output
+drain statistics, output

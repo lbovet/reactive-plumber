@@ -20,7 +20,7 @@ def numberPrint = pipe {
     doOnSuccess print
 }
 
-sink stringPrint, numberPrint
+drain stringPrint, numberPrint
 
 
 

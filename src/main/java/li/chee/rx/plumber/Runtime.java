@@ -248,7 +248,7 @@ public class Runtime {
                                             }
                                         }
                                     });
-                        } else if (call.getMethodAsString().equals("sink")) {
+                        } else if (call.getMethodAsString().equals("drain")) {
                             AtomicInteger count = new AtomicInteger();
                             Node target = new Node()
                                     .attr(Attribute.SHAPE, Shape.CIRCLE)

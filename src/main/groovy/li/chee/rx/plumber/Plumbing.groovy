@@ -82,7 +82,7 @@ abstract class Plumbing extends Flowable {
      * @param pipes the terminal pipes
      * @return nothing
      */
-    static sink(Flowable... pipes) {
+    static drain(Flowable... pipes) {
         def lasts = fromIterable(pipes.toList()) map { it.last('').toFlowable() }
         merge(lasts).blockingLast()
     }

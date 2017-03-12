@@ -16,8 +16,6 @@ class SimplePipeWork extends Recorder {
             doOnSuccess { Box b -> send(b.getContext(String.class)) }
         }
 
-        sink pipe {
-            from p
-        }
+        drain p
     }
 }

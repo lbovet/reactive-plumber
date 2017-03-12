@@ -29,4 +29,4 @@ def thread = pipe {
     from renderer to printer
 }
 
-sink size, thread
+drain size, thread
