@@ -3,7 +3,6 @@ package li.chee.rx.plumber;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 import guru.nidi.graphviz.engine.Graphviz;
-import guru.nidi.graphviz.model.*;
 import org.codehaus.groovy.ast.ClassNode;
 import org.codehaus.groovy.ast.CodeVisitorSupport;
 import org.codehaus.groovy.ast.Parameter;
@@ -17,8 +16,6 @@ import org.codehaus.groovy.control.CompilerConfiguration;
 import org.codehaus.groovy.control.SourceUnit;
 import org.codehaus.groovy.control.customizers.CompilationCustomizer;
 import org.kohsuke.graphviz.*;
-import org.kohsuke.graphviz.Graph;
-import org.kohsuke.graphviz.Node;
 import org.kohsuke.graphviz.Shape;
 
 import java.awt.Color;
@@ -52,15 +49,25 @@ public class Runtime {
         }
     }
 
+    private boolean generateGraph = false;
+
     private GraphTheme theme = GraphTheme.DARK;
 
     public void setGraphTheme(GraphTheme theme) {
         this.theme = theme;
     }
 
+    public Runtime() {}
+
+    public Runtime(boolean generateGraph) {
+        this.generateGraph = generateGraph;
+    }
+
     public Object run(String scriptText) {
         CompilerConfiguration config = new CompilerConfiguration();
-        config.addCompilationCustomizers(graphOutputCustomizer());
+        if(generateGraph) {
+            config.addCompilationCustomizers(graphOutputCustomizer());
+        }
         GroovyShell shell = new GroovyShell(config);
         Script script = shell.parse(scriptText);
         return script.run();
