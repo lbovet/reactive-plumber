@@ -21,8 +21,10 @@ def odd = pipe {
     map with(ODD)
 }
 
-sink pipe {
+def result = pipe {
     from concat(even, odd) doOnNext print
 }
+
+sink result
 
 

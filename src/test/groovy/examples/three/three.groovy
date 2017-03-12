@@ -18,13 +18,15 @@ def counts = pipe each(groups) {
     map with(key(it))
 }
 
-sink \
-pipe {
+def statistics = pipe {
     from concat(counts) \
     doOnNext stats
-},
-pipe {
+}
+
+def output = pipe {
     from numbers \
     doOnNext print \
     doOnComplete { println "---"}
 }
+
+sink statistics, output
