@@ -2,6 +2,8 @@ package li.chee.rx.plumber;
 
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -11,6 +13,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests the plumbing tools using groovy scripts.
@@ -51,4 +54,37 @@ public class PlumbingTest {
     public void testRuntimeFive() throws IOException {
         Object result = new Runtime(true).run(new String(Files.readAllBytes(Paths.get("src/test/groovy/examples/five/five.groovy"))));
     }
+
+    @Test
+    public void testGeneratePngOutputStream() throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        new Runtime().generateGraph
+                (new String(Files.readAllBytes(Paths.get("src/test/groovy/examples/one/one.groovy"))),
+                        "png",
+                        bos);
+        assertTrue(bos.size() > 0);
+        assertTrue(new String(bos.toByteArray()).substring(0, 10).contains("PNG"));
+    }
+
+    @Test
+    public void testGenerateSvgOutputStream() throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        new Runtime().generateGraph
+                (new String(Files.readAllBytes(Paths.get("src/test/groovy/examples/one/one.groovy"))),
+                        "svg",
+                        bos);
+        assertTrue(bos.size() > 0);
+        assertTrue(new String(bos.toByteArray()).substring(0, 120).contains("svg"));
+    }
+
+    @Test
+    public void testGenerateGifFile() throws IOException {
+        File f = new File("target/graph.gif");
+        new Runtime().generateGraph(new String(Files.readAllBytes(Paths.get("src/test/groovy/examples/one/one.groovy"))), f);
+        String s = new String(Files.readAllBytes(f.toPath())).substring(0, 10);
+        assertTrue(s.contains("GIF"));
+        f.delete();
+        f.deleteOnExit();
+    }
+
 }
