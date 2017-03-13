@@ -36,7 +36,6 @@ def thread = pipe {
 
 drain size, thread
 ```
- you visualize it graphically:
 
 ## The DSL
 
@@ -58,7 +57,7 @@ def items = pipe {
 
 This defines a _pipe_, which is actually a _Flowable_. In the closure block, we simply chain normal RxJava methods. Here we count the bits in each numbers and convert them into strings.
 
-## From
+### From
 
 To connect pipes together, use _from_:
 
@@ -77,7 +76,7 @@ It is not sufficient to connect pipes together in order to define your plumbing.
 drain printer
 ```
 
-## Tools
+### Tools
 
 You will expose your own functions to be used in the plumbing. Do that in a sub-class of `Plumbing`, so that when you import statically your functions, you will also get the Rx-Plumber builtin functions.
 
@@ -151,6 +150,21 @@ output:
 [4 [RxComputationThreadPool-4]|]
 [3 / 4|]
 [4 / 4|]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.
 ```
 
 ### Two
@@ -165,6 +179,20 @@ output:
 ```
 2 EVEN
 3 ODD
+
+
+
+
+
+
+
+
+
+
+
+
+
+.
 ```
 
 ### Three
@@ -195,6 +223,10 @@ FIZZBUZZ
 FIZZ: 4
 BUZZ: 2
 FIZZBUZZ: 1
+
+
+
+.
 ```
 
 ### Four
@@ -210,6 +242,17 @@ output:
 FIZZ: 4
 BUZZ: 2
 FIZZBUZZ: 1
+
+
+
+
+
+
+
+
+
+
+.
 ```
 
 ### Five
@@ -224,6 +267,13 @@ output:
 ```
 strings, [hello|], [world|]
 numbers, [5|], [3|]
+
+
+
+
+
+
+.
 ```
 
 ## Graph Visualization

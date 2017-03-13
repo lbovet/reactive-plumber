@@ -55,6 +55,11 @@ public class Runtime {
         this.theme = theme;
     }
 
+    public Runtime withGraphTheme(GraphTheme theme) {
+        setGraphTheme(theme);
+        return this;
+    }
+
     public Runtime() {}
 
     public Runtime(boolean generateGraph) {

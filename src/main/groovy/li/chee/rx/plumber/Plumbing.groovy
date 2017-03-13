@@ -15,6 +15,8 @@ abstract class Plumbing extends Flowable {
     static wrap = Box.&wrap
     static unwrap = Box.&unwrap
     static attach = Box.&attach
+    static mapper = Box.&mapper
+    static bind = Box.&flatMap
 
     /**
      * Resolves a source. It can be a Flowable or a closure returning a Flowable.

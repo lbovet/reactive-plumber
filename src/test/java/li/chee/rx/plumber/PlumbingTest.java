@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -87,4 +88,15 @@ public class PlumbingTest {
         f.deleteOnExit();
     }
 
+    @Test
+    public void generateAllImages() throws IOException {
+        Arrays.asList("one", "two", "three", "four", "five").stream().forEach(script -> {
+                    try {
+                        new Runtime().withGraphTheme(Runtime.GraphTheme.LIGHT).generateGraph(new String(Files.readAllBytes(Paths.get("src/test/groovy/examples/" + script + "/" + script + ".groovy"))), new File("target/"+script+".png"));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+        );
+    }
 }
