@@ -76,7 +76,7 @@ public class Runtime {
 
     public void generateGraph(String scriptText, String type, OutputStream output) {
         CompilerConfiguration config = new CompilerConfiguration();
-        config.addCompilationCustomizers(graphOutputCustomizer(type, output));
+        config.addCompilationCustomizers(getGraphOutputCustomizer(type, output));
         GroovyShell shell = new GroovyShell(config);
         shell.parse(scriptText);
     }
@@ -84,18 +84,18 @@ public class Runtime {
     public Object run(String scriptText) {
         CompilerConfiguration config = new CompilerConfiguration();
         if(generateGraph) {
-            config.addCompilationCustomizers(graphOutputCustomizer());
+            config.addCompilationCustomizers(getGraphOutputCustomizer());
         }
         GroovyShell shell = new GroovyShell(config);
         Script script = shell.parse(scriptText);
         return script.run();
     }
 
-    private CompilationCustomizer graphOutputCustomizer() {
-        return graphOutputCustomizer(null, null);
+    public CompilationCustomizer getGraphOutputCustomizer() {
+        return getGraphOutputCustomizer(null, null);
     }
 
-    private CompilationCustomizer graphOutputCustomizer(String type, OutputStream output) {
+    public CompilationCustomizer getGraphOutputCustomizer(String type, OutputStream output) {
         return new CompilationCustomizer(CompilePhase.SEMANTIC_ANALYSIS) {
             DeclarationExpression currentDeclaration;
             Node previousNode;
@@ -340,7 +340,7 @@ public class Runtime {
                 });
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
                 graph.writeTo(out);
-                Graphviz g = Graphviz.fromString(out.toString());
+                Graphviz g = Graphviz.fromString(out.toString().replaceAll("\\r", ""));
 
                 if(type == null) {
                     g.renderToFile(new File("target/graph.png"));
