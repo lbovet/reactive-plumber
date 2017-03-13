@@ -68,7 +68,7 @@ def printer = pipe {
 }
 ```
 
-## Drain
+### Drain
 
 It is not sufficient to connect pipes together in order to define your plumbing. You also need to declare on which pipes you will _suck_ the data.
 
