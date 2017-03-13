@@ -4,6 +4,8 @@ You want to use [RxJava](https://github.com/ReactiveX/RxJava) in a modular, read
 
 Rx-Plumber let you write your RxJava plumbing in a Groovy DSL and also visualize them graphically.
 
+It is intended to be used in Java or Groovy applications.
+
 <img align="right" src="https://cloud.githubusercontent.com/assets/692124/23836787/2761ce26-077e-11e7-97f0-ffda49431851.png">
 
 ```groovy
@@ -280,7 +282,7 @@ numbers, [5|], [3|]
 
 Rx-Plumber can create graph images of your plumbing like the ones above by analyzing the Groovy AST of the script.
 
-```
+```java
 Runtime runtime = new Runtime().withGraphTheme(Runtime.GraphTheme.LIGHT); // White background
 runtime.generateGraph("src/test/groovy/examples/one/one.groovy", new File("target/graph.png"));
 runtime.generateGraph("src/test/groovy/examples/one/one.groovy", "svg", System.out));
