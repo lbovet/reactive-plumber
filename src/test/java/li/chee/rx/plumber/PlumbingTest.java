@@ -7,13 +7,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -90,7 +89,7 @@ public class PlumbingTest {
 
     @Test
     public void generateAllImages() throws IOException {
-        Arrays.asList("one", "two", "three", "four", "five").stream().forEach(script -> {
+        Stream.of("one", "two", "three", "four", "five").forEach(script -> {
                     try {
                         new Runtime().withGraphTheme(Runtime.GraphTheme.LIGHT).generateGraph(new String(Files.readAllBytes(Paths.get("src/test/groovy/examples/" + script + "/" + script + ".groovy"))), new File("target/"+script+".png"));
                     } catch (IOException e) {
