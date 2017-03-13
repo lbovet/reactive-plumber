@@ -39,6 +39,7 @@ public class Runtime {
         DARK(DARK_GRAY, GRAY, LIGHT_GRAY, BLACK);
 
         public Color background, arrow, box, text;
+
         GraphTheme(Color... colors) {
             background = colors[0];
             arrow = colors[1];
@@ -51,8 +52,14 @@ public class Runtime {
 
     private GraphTheme theme = GraphTheme.DARK;
 
+    private boolean hideToLinks = true;
+
     public void setGraphTheme(GraphTheme theme) {
         this.theme = theme;
+    }
+
+    public void setGraphShowToLinks(boolean showToLinks) {
+        this.hideToLinks = !showToLinks;
     }
 
     public Runtime withGraphTheme(GraphTheme theme) {
@@ -60,7 +67,13 @@ public class Runtime {
         return this;
     }
 
-    public Runtime() {}
+    public Runtime withGraphShowToLinks(boolean showToLinks) {
+        setGraphShowToLinks(showToLinks);
+        return this;
+    }
+
+    public Runtime() {
+    }
 
     public Runtime(boolean generateGraph) {
         this.generateGraph = generateGraph;
@@ -68,7 +81,7 @@ public class Runtime {
 
     public void generateGraph(String scriptText, File file) {
         try {
-            generateGraph(scriptText, Arrays.stream(file.getName().split("\\.")).reduce((a,b)->b).get(), new FileOutputStream(file));
+            generateGraph(scriptText, Arrays.stream(file.getName().split("\\.")).reduce((a, b) -> b).get(), new FileOutputStream(file));
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -83,7 +96,7 @@ public class Runtime {
 
     public Object run(String scriptText) {
         CompilerConfiguration config = new CompilerConfiguration();
-        if(generateGraph) {
+        if (generateGraph) {
             config.addCompilationCustomizers(getGraphOutputCustomizer());
         }
         GroovyShell shell = new GroovyShell(config);
@@ -100,6 +113,7 @@ public class Runtime {
             DeclarationExpression currentDeclaration;
             Node previousNode;
             Map<Object, Node> nodes = new HashMap<>();
+            Map<Object, String> edgeLabels = new HashMap<>();
             Style edgeStyle = new Style()
                     .attr(Attribute.COLOR, theme.arrow)
                     .attr(Attribute.FONTNAME, "arial")
@@ -154,6 +168,9 @@ public class Runtime {
                             StringBuilder label = new StringBuilder("split");
                             ArgumentListExpression args = ((ArgumentListExpression) (((StaticMethodCallExpression) right).getArguments()));
                             Node node = new Node();
+                            List<Expression> vars =
+                                    ((ArgumentListExpression) expression.getLeftExpression()).getExpressions();
+                            Iterator<String> names = vars.stream().map(var -> ((VariableExpression) var).getAccessedVariable().getName()).iterator();
                             args.getExpression(0).visit(
                                     new CodeVisitorSupport() {
                                         @Override
@@ -178,9 +195,10 @@ public class Runtime {
                                     });
                             node.attr(Attribute.LABEL, label.toString()).attr(Attribute.FONTNAME, "arial italic");
                             graph.node(node);
-                            List<Expression> vars =
-                                    ((ArgumentListExpression) expression.getLeftExpression()).getExpressions();
-                            vars.forEach(var -> nodes.put(((VariableExpression) var).getAccessedVariable(), node));
+                            vars.forEach(var -> {
+                                nodes.put(((VariableExpression) var).getAccessedVariable(), node);
+                                edgeLabels.put(((VariableExpression) var).getAccessedVariable(), ((VariableExpression) var).getAccessedVariable().getName());
+                            });
                         }
                     }
 
@@ -202,8 +220,19 @@ public class Runtime {
                                         }
 
                                         @Override
+                                        public void visitConstantExpression(ConstantExpression expression) {
+                                            boolean str = expression.getType().getName().equals("java.lang.String");
+                                            label.append(" "+(str?"'":""))
+                                                    .append(statics(expression.getValue().toString()))
+                                                    .append((str?"'":""));
+                                        }
+
+                                        @Override
                                         public void visitVariableExpression(VariableExpression expression) {
                                             Node peer = nodes.get(expression.getAccessedVariable());
+                                            if (isTo && hideToLinks) {
+                                                label.append(expression.getName());
+                                            }
                                             if (peer != null) {
                                                 peers.add(peer);
                                             }
@@ -214,11 +243,14 @@ public class Runtime {
                                 node.attr(Attribute.FONTNAME, "arial");
                             }
                             if (isTo && peers.size() > 0) {
-                                node.attr("shape", "cds")
-                                        .attr(Attribute.WIDTH, 0.3F)
-                                        .attr(Attribute.FIXEDSIZE, true);
-                                Edge edge = edge(node, peers.get(0)).attr(Attribute.STYLE, StyleAttr.DASHED);
-                                graph.edge(edge);
+                                node.attr(Attribute.STYLE, StyleAttr.ROUNDED)
+                                        .attr(Attribute.FONTCOLOR, theme.box);
+                                if (!hideToLinks) {
+                                    node.attr(Attribute.WIDTH, 0.3F)
+                                            .attr(Attribute.FIXEDSIZE, true);
+                                    Edge edge = edge(node, peers.get(0)).attr(Attribute.STYLE, StyleAttr.DASHED);
+                                    graph.edge(edge);
+                                }
                             } else {
                                 peers.forEach(peer -> {
                                     Edge edge = edge(peer, node).attr(Attribute.STYLE, StyleAttr.DASHED);
@@ -247,14 +279,29 @@ public class Runtime {
                                         @Override
                                         public void visitStaticMethodCallExpression(StaticMethodCallExpression call) {
                                             List<Node> sources = new ArrayList<>();
+                                            StringBuilder label = new StringBuilder(html(statics(call.getMethodAsString())));
                                             call.getArguments().visit(new CodeVisitorSupport() {
+                                                @Override
+                                                public void visitStaticMethodCallExpression(StaticMethodCallExpression call) {
+                                                    label.append(" ").append(statics(call.getMethodAsString()));
+                                                    call.getArguments().visit(this);
+                                                }
+
                                                 @Override
                                                 public void visitVariableExpression(VariableExpression expression) {
                                                     sources.add(nodes.get(expression.getAccessedVariable()));
                                                 }
+
+                                                @Override
+                                                public void visitConstantExpression(ConstantExpression expression) {
+                                                    boolean str = expression.getType().getName().equals("java.lang.String");
+                                                    label.append(" "+(str?"'":""))
+                                                            .append(statics(expression.getValue().toString()))
+                                                            .append((str?"'":""));
+                                                }
                                             });
                                             node[0] = new Node()
-                                                    .attr(Attribute.LABEL, html(statics(call.getMethodAsString())))
+                                                    .attr(Attribute.LABEL, label.toString())
                                                     .attr(Attribute.FONTNAME, "arial italic");
                                             if (sources.size() == 0) {
                                                 if (!nodes.containsKey(call.getText())) {
@@ -263,7 +310,10 @@ public class Runtime {
                                                 }
                                             } else {
                                                 currentSubGraph.node(node[0]);
-                                                sources.forEach(source -> graph.edge(edge(source, node[0])));
+                                                sources.forEach(source -> {
+                                                    Edge edge = edge(source, node[0]);
+                                                    graph.edge(edge);
+                                                });
                                             }
                                             if (previousNode != null) {
                                                 graph.edge(edge(node[0], previousNode));
@@ -342,7 +392,7 @@ public class Runtime {
                 graph.writeTo(out);
                 Graphviz g = Graphviz.fromString(out.toString().replaceAll("\\r", ""));
 
-                if(type == null) {
+                if (type == null) {
                     g.renderToFile(new File("target/graph.png"));
                     try {
                         Files.write(Paths.get("target/graph.svg"), g.createSvg().getBytes(Charset.forName("UTF8")));
@@ -350,7 +400,7 @@ public class Runtime {
                         throw new RuntimeException(e);
                     }
                 } else {
-                    if("svg".equals(type)) {
+                    if ("svg".equals(type)) {
                         try {
                             output.write(g.createSvg().getBytes(Charset.forName("UTF8")));
                         } catch (IOException e) {
@@ -358,7 +408,7 @@ public class Runtime {
                         }
                     } else {
                         try {
-                            File f = File.createTempFile("tmp", "."+type);
+                            File f = File.createTempFile("tmp", "." + type);
                             g.renderToFile(f);
                             Files.copy(f.toPath(), output);
                             f.delete();

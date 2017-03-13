@@ -28,7 +28,7 @@ public class PlumbingTest {
 
     @Test
     public void testRuntimeOne() throws IOException {
-        Object result = new Runtime(true).run(new String(Files.readAllBytes(Paths.get("src/test/groovy/examples/one/one.groovy"))));
+        Object result = new Runtime(true).withGraphShowToLinks(true).run(new String(Files.readAllBytes(Paths.get("src/test/groovy/examples/one/one.groovy"))));
         assertEquals('[', result.toString().charAt(0));
     }
 
