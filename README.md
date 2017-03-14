@@ -1,8 +1,8 @@
 # Rx-Plumber
 
-You want to use [RxJava](https://github.com/ReactiveX/RxJava) in a modular, readable and safe way?
+You want to use [RxJava](https://github.com/ReactiveX/RxJava) with a modular, readable and safe abstraction.
 
-Rx-Plumber let you write your RxJava plumbing in a Groovy DSL and also visualize them graphically.
+Rx-Plumber let you write your RxJava plumbing in a Groovy DSL and also visualize it graphically.
 
 It is intended to be used in Java or Groovy applications.
 
@@ -39,6 +39,12 @@ def thread = pipe {
 drain size, thread
 ```
 
+Built using these outstanding projects:
+ - [Groovy](http://groovy-lang.org)
+ - [RxJava](https://github.com/ReactiveX/RxJava)
+ - [graphviz-java](https://github.com/nidi3/graphviz-java)
+ 
+  
 ## The DSL
 
 Have a look at the [examples scripts](https://github.com/lbovet/rx-plumber/tree/master/src/test/groovy/examples).
