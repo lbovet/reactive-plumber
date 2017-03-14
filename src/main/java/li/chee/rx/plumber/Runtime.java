@@ -170,7 +170,6 @@ public class Runtime {
                             Node node = new Node();
                             List<Expression> vars =
                                     ((ArgumentListExpression) expression.getLeftExpression()).getExpressions();
-                            Iterator<String> names = vars.stream().map(var -> ((VariableExpression) var).getAccessedVariable().getName()).iterator();
                             args.getExpression(0).visit(
                                     new CodeVisitorSupport() {
                                         @Override
@@ -325,7 +324,9 @@ public class Runtime {
                                         @Override
                                         public void visitVariableExpression(VariableExpression expression) {
                                             if (!expression.getAccessedVariable().getName().equals("it")) {
-                                                graph.edge(edge(nodes.get(expression.getAccessedVariable()), previousNode));
+                                                Edge edge = edge(nodes.get(expression.getAccessedVariable()), previousNode);
+                                                Optional.of(edgeLabels.get(expression.getAccessedVariable())).map( label -> edge.attr(Attribute.LABEL, label));
+                                                graph.edge(edge);
                                             } else {
                                                 if (currentSources.isEmpty()) {
                                                     currentSubGraph.attr(Attribute.STYLE, StyleAttr.ROUNDED);

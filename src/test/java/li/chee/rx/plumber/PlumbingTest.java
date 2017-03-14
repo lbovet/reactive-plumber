@@ -52,7 +52,7 @@ public class PlumbingTest {
 
     @Test
     public void testRuntimeFive() throws IOException {
-        Object result = new Runtime(true).run(new String(Files.readAllBytes(Paths.get("src/test/groovy/examples/five/five.groovy"))));
+        new Runtime(true).run(new String(Files.readAllBytes(Paths.get("src/test/groovy/examples/five/five.groovy"))));
     }
 
     @Test
