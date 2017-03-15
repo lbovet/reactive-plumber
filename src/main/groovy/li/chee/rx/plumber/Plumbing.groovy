@@ -18,6 +18,10 @@ abstract class Plumbing extends Flowable {
     static mapper = Box.&mapper
     static bind = Box.&flatMap
 
+    static export(Object... objects) {
+        return objects
+    }
+
     /**
      * Resolves a source. It can be a Flowable or a closure returning a Flowable.
      * @param it the source or its generating function.
