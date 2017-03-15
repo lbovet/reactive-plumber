@@ -192,7 +192,7 @@ public class Runtime {
                                             graph.edge(edge(peer, node));
                                         }
                                     });
-                            node.attr(Attribute.LABEL, label.toString()).attr(Attribute.FONTNAME, "arial italic");
+                            node.attr(Attribute.LABEL, label.toString()).attr(Attribute.FONTNAME, "arial");
                             graph.node(node);
                             vars.forEach(var -> {
                                 nodes.put(((VariableExpression) var).getAccessedVariable(), node);
@@ -301,7 +301,7 @@ public class Runtime {
                                             });
                                             node[0] = new Node()
                                                     .attr(Attribute.LABEL, label.toString())
-                                                    .attr(Attribute.FONTNAME, "arial italic");
+                                                    .attr(Attribute.FONTNAME, "arial");
                                             if (sources.size() == 0) {
                                                 if (!nodes.containsKey(call.getText())) {
                                                     nodes.put(call.getText(), node[0]);
@@ -325,7 +325,7 @@ public class Runtime {
                                         public void visitVariableExpression(VariableExpression expression) {
                                             if (!expression.getAccessedVariable().getName().equals("it")) {
                                                 Edge edge = edge(nodes.get(expression.getAccessedVariable()), previousNode);
-                                                Optional.of(edgeLabels.get(expression.getAccessedVariable())).map( label -> edge.attr(Attribute.LABEL, label));
+                                                Optional.ofNullable(edgeLabels.get(expression.getAccessedVariable())).map( label -> edge.attr(Attribute.LABEL, label));
                                                 graph.edge(edge);
                                             } else {
                                                 if (currentSources.isEmpty()) {
@@ -392,6 +392,7 @@ public class Runtime {
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
                 graph.writeTo(out);
                 Graphviz g = Graphviz.fromString(out.toString().replaceAll("\\r", ""));
+                g = g.scale(1f);
 
                 if (type == null) {
                     g.renderToFile(new File("target/graph.png"));
