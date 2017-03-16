@@ -17,6 +17,7 @@ abstract class Plumbing extends Flowable {
     static attach = Box.&attach
     static mapper = Box.&mapper
     static bind = Box.&flatMap
+    static show = { println it }
 
     static export(Object... objects) {
         return objects
@@ -52,7 +53,7 @@ abstract class Plumbing extends Flowable {
         if (ParallelFlowable.isAssignableFrom(result.getClass())) {
             result = result.sequential()
         }
-        result = result.subscribeOn Schedulers.newThread()
+        result = result.subscribeOn Schedulers.computation()
         if (Single.isAssignableFrom(result.getClass())) {
             result = result.toFlowable()
         }

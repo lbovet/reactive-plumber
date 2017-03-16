@@ -357,8 +357,8 @@ public class Runtime {
                                         @Override
                                         public void visitVariableExpression(VariableExpression expression) {
                                             Node source = nodes.get(expression.getAccessedVariable());
-                                            edge[0] = edge(source, target)
-                                                    .attr(Attribute.LABEL, "" + count.incrementAndGet());
+                                            edge[0] = edge(source, target);
+                                            // edge[0].attr(Attribute.LABEL, "" + count.incrementAndGet());
                                             graph.edge(edge[0]);
                                         }
                                     });
