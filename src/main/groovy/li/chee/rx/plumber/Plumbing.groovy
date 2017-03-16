@@ -17,7 +17,7 @@ abstract class Plumbing extends Flowable {
     static attach = Box.&attach
     static mapper = Box.&mapper
     static bind = Box.&flatMap
-    static show = { println it }
+    static show = { println "<"+Thread.currentThread().getId()+"> "+it }
 
     static export(Object... objects) {
         return objects
