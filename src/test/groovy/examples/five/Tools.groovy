@@ -11,5 +11,7 @@ abstract class Tools extends Plumbing {
             { it.getValue() instanceof Integer }
     ]
     static line = { x, y -> x + ", " + y }
-    static print = { println it }
+
+    static fuse = { a,b -> Arrays.asList(a,b) }
+    static show = { List x -> System.out.print x.size() }
 }

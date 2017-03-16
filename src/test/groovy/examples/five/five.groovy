@@ -9,18 +9,19 @@ def data = pipe {
 def (strings, numbers) = split(types, data)
 
 def stringPrint = pipe {
-    from strings \
-    reduce("strings", line) \
-    doOnSuccess print
+    from strings
 }
 
 def numberPrint = pipe {
-    from numbers \
-    reduce("numbers", line) \
-    doOnSuccess print
+    from numbers
 }
 
-drain stringPrint, numberPrint
+def merge = pipe {
+    from zip(stringPrint, numberPrint, fuse) \
+    doOnNext show
+}
+
+drain merge
 
 
 
