@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>li.chee.rx.plumber</groupId>
     <artifactId>rx-plumber</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.1</version>
     <build>
         <plugins>
             <plugin>
@@ -37,6 +37,18 @@
             </plugin>
         </plugins>
     </build>
+    <distributionManagement>
+        <repository>
+            <id>artifactory-releases</id>
+            <name>artifactory.pnet.ch-releases</name>
+            <url>http://artifactory.pnet.ch/artifactory/libs-release-local</url>
+        </repository>
+        <snapshotRepository>
+            <id>artifactory-snapshots</id>
+            <name>artifactory.pnet.ch-snapshots</name>
+            <url>http://artifactory.pnet.ch/artifactory/libs-snapshot-local</url>
+        </snapshotRepository>
+    </distributionManagement>
     <dependencies>
         <dependency>
             <groupId>io.reactivex.rxjava2</groupId>
