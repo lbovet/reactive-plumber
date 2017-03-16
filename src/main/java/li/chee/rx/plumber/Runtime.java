@@ -3,10 +3,7 @@ package li.chee.rx.plumber;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
 import guru.nidi.graphviz.engine.Graphviz;
-import org.codehaus.groovy.ast.ClassNode;
-import org.codehaus.groovy.ast.CodeVisitorSupport;
-import org.codehaus.groovy.ast.Parameter;
-import org.codehaus.groovy.ast.Variable;
+import org.codehaus.groovy.ast.*;
 import org.codehaus.groovy.ast.expr.*;
 import org.codehaus.groovy.ast.stmt.BlockStatement;
 import org.codehaus.groovy.classgen.GeneratorContext;
@@ -139,7 +136,8 @@ public class Runtime {
 
             @Override
             public void call(SourceUnit sourceUnit, GeneratorContext generatorContext, ClassNode classNode) throws CompilationFailedException {
-                BlockStatement block = (BlockStatement) classNode.getDeclaredMethod("run", new Parameter[0]).getCode();
+                MethodNode method = classNode.getDeclaredMethod("run", new Parameter[0]);
+                BlockStatement block = (BlockStatement) method.getCode();
                 block.visit(new CodeVisitorSupport() {
 
                     @Override
@@ -324,9 +322,16 @@ public class Runtime {
                                         @Override
                                         public void visitVariableExpression(VariableExpression expression) {
                                             if (!expression.getAccessedVariable().getName().equals("it")) {
-                                                Edge edge = edge(nodes.get(expression.getAccessedVariable()), previousNode);
-                                                Optional.ofNullable(edgeLabels.get(expression.getAccessedVariable())).map( label -> edge.attr(Attribute.LABEL, label));
-                                                graph.edge(edge);
+                                                if(previousNode != null) {
+                                                    Edge edge = edge(nodes.get(expression.getAccessedVariable()), previousNode);
+                                                    Optional.ofNullable(edgeLabels.get(expression.getAccessedVariable())).map(label -> edge.attr(Attribute.LABEL, label));
+                                                    graph.edge(edge);
+                                                } else{
+                                                    Node source = nodes.get(expression.getAccessedVariable());
+                                                    if(node != null) {
+                                                        nodes.putIfAbsent(currentDeclaration.getVariableExpression(), source);
+                                                    }
+                                                }
                                             } else {
                                                 if (currentSources.isEmpty()) {
                                                     currentSubGraph.attr(Attribute.STYLE, StyleAttr.ROUNDED);
