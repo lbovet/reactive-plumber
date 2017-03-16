@@ -3,8 +3,11 @@ package li.chee.rx.plumber
 import io.reactivex.Flowable
 import io.reactivex.Single
 import io.reactivex.flowables.GroupedFlowable
+import io.reactivex.functions.Consumer
 import io.reactivex.parallel.ParallelFlowable
 import io.reactivex.schedulers.Schedulers
+
+import java.util.concurrent.CountDownLatch
 
 /**
  * Base piping tools.
@@ -18,6 +21,8 @@ abstract class Plumbing extends Flowable {
     static mapper = Box.&mapper
     static bind = Box.&flatMap
     static show = { println "<"+Thread.currentThread().getId()+"> "+it }
+
+    private static connectables = []
 
     static export(Object... objects) {
         return objects
@@ -50,13 +55,9 @@ abstract class Plumbing extends Flowable {
      */
     static Flowable pipe(Closure closure) {
         def result = closure()
-        if (ParallelFlowable.isAssignableFrom(result.getClass())) {
-            result = result.sequential()
-        }
-        result = result.subscribeOn Schedulers.computation()
-        if (Single.isAssignableFrom(result.getClass())) {
-            result = result.toFlowable()
-        }
+        result = normalize result
+        result = result.publish()
+        connectables.add result
         result
     }
 
@@ -79,7 +80,7 @@ abstract class Plumbing extends Flowable {
     static each(Flowable streams, Closure closure ) {
         return {
             streams.map { f ->
-                pipe { closure(f) }
+                normalize closure(f)
             }
         }
     }
@@ -90,8 +91,12 @@ abstract class Plumbing extends Flowable {
      * @return nothing
      */
     static drain(Flowable... pipes) {
+        def latch = new CountDownLatch(pipes.size())
         def lasts = fromIterable(pipes.toList()) map { it.last('').toFlowable() }
-        merge(lasts).blockingLast()
+        merge(lasts).subscribe((Consumer){ latch.countDown() })
+        connectables.addAll pipes
+        connectables.reverse().each { it.connect() }
+        latch.await()
     }
 
     /**
@@ -127,6 +132,16 @@ abstract class Plumbing extends Flowable {
                 box = new Box(it)
             }
             return box.with(((GroupedFlowable)flowable).getKey())
+        }
+    }
+
+    private static normalize(f) {
+        if (ParallelFlowable.isAssignableFrom(f.getClass())) {
+            f.sequential()
+        } else if (Single.isAssignableFrom(f.getClass())) {
+            f.toFlowable()
+        } else {
+            f
         }
     }
 }

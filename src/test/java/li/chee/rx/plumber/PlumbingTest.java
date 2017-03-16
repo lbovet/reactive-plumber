@@ -7,12 +7,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.stream.Stream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -21,33 +17,23 @@ import static org.junit.Assert.assertTrue;
 public class PlumbingTest {
 
     @Test
-    public void testSimplePipeWork() {
-        List<Object> events = new SimplePipeWork().execute().events();
-        assertThat(events, contains(1, 2, 3, "hello"));
-    }
-
-    @Test
     public void testRuntimeOne() throws IOException {
-        Object result = new Runtime(true).withGraphShowToLinks(true).run(new String(Files.readAllBytes(Paths.get("src/test/groovy/examples/one/one.groovy"))));
-        assertEquals('[', result.toString().charAt(0));
+        new Runtime(true).withGraphShowToLinks(true).run(new String(Files.readAllBytes(Paths.get("src/test/groovy/examples/one/one.groovy"))));
     }
 
     @Test
     public void testRuntimeTwo() throws IOException {
-        Object result = new Runtime(true).run(new String(Files.readAllBytes(Paths.get("src/test/groovy/examples/two/two.groovy"))));
-        assertEquals('[', result.toString().charAt(0));
+        new Runtime(true).run(new String(Files.readAllBytes(Paths.get("src/test/groovy/examples/two/two.groovy"))));
     }
 
     @Test
     public void testRuntimeThree() throws IOException {
-        Object result = new Runtime(true).run(new String(Files.readAllBytes(Paths.get("src/test/groovy/examples/three/three.groovy"))));
-        assertEquals('[', result.toString().charAt(0));
+        new Runtime(true).run(new String(Files.readAllBytes(Paths.get("src/test/groovy/examples/three/three.groovy"))));
     }
 
     @Test
     public void testRuntimeFour() throws IOException {
-        Object result = new Runtime(true).run(new String(Files.readAllBytes(Paths.get("src/test/groovy/examples/four/four.groovy"))));
-        assertEquals('[', result.toString().charAt(0));
+        new Runtime(true).run(new String(Files.readAllBytes(Paths.get("src/test/groovy/examples/four/four.groovy"))));
     }
 
     @Test

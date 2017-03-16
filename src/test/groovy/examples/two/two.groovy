@@ -16,13 +16,13 @@ def even = pipe {
 
 def odd = pipe {
     from marked \
-    filter context(ODD)\
+    filter context(ODD) \
     count() \
     map with(ODD)
 }
 
 def result = pipe {
-    from concat(even, odd) doOnNext print
+    from concat(odd, even) doOnNext print
 }
 
 drain result
