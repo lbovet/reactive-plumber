@@ -276,7 +276,10 @@ public class Runtime {
                                         @Override
                                         public void visitStaticMethodCallExpression(StaticMethodCallExpression call) {
                                             List<Node> sources = new ArrayList<>();
-                                            StringBuilder label = new StringBuilder(html(statics(call.getMethodAsString())));
+                                            StringBuilder label = new StringBuilder();
+                                            if(!call.getMethod().equals("zip")) {
+                                                label.append(html(statics(call.getMethodAsString())));
+                                            }
                                             call.getArguments().visit(new CodeVisitorSupport() {
                                                 @Override
                                                 public void visitStaticMethodCallExpression(StaticMethodCallExpression call) {
