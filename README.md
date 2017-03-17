@@ -1,8 +1,8 @@
-# Rx-Plumber
+# Reactive-Plumber
 
 You want to use [RxJava](https://github.com/ReactiveX/RxJava) or [Reactor](https://projectreactor.io/) Flux with a modular, readable and safe abstraction.
 
-Rx-Plumber let you write your Flux/Flowable plumbing in a Groovy DSL and also visualize it graphically.
+Reactive-Plumber let you write your Flux/Flowable plumbing in a Groovy DSL and also visualize it graphically.
 
 It is intended to be used in Java or Groovy applications.
 
@@ -87,7 +87,7 @@ drain printer
 
 ### Tools
 
-You will expose your own functions to be used in the plumbing. Do that in a sub-class of `Plumbing`, so that when you import statically your functions, you will also get the Rx-Plumber builtin functions.
+You will expose your own functions to be used in the plumbing. Do that in a sub-class of `Plumbing`, so that when you import statically your functions, you will also get the Reactive-Plumber builtin functions.
 
 _Tools.groovy_:
 ```groovy
