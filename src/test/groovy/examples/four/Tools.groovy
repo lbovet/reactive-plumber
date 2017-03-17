@@ -23,8 +23,4 @@ abstract class Tools extends Plumbing {
         }
     }
 
-    static myCount = {
-        it.count().toFlowable()
-    }
-
 }

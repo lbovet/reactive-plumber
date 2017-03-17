@@ -7,11 +7,12 @@ def data = pipe {
 }
 
 def printer = {
-    from it doOnNext print
+    from it doOnNext show()
 }
 
 def renderer = pipe {
-    parallel from(data) map renderThread
+    parallel from(data) \
+    map renderThread
 }
 
 def count = pipe {
@@ -29,4 +30,4 @@ def thread = pipe {
     from renderer to printer
 }
 
-drain size, thread
+drain thread, size

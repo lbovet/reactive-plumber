@@ -10,14 +10,14 @@ def (strings, numbers) = split(types, data)
 
 def stringPrint = pipe {
     from strings \
-    reduce("strings", line) \
-    doOnSuccess print
+    reduce("strings:", line) \
+    doOnSuccess show()
 }
 
 def numberPrint = pipe {
     from numbers \
-    reduce("numbers", line) \
-    doOnSuccess print
+    reduce("numbers:", line) \
+    doOnSuccess show()
 }
 
 drain stringPrint, numberPrint

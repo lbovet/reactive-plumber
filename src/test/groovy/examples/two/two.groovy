@@ -22,7 +22,7 @@ def odd = pipe {
 }
 
 def result = pipe {
-    from concat(even, odd) doOnNext print
+    from concat(even, odd) doOnNext show()
 }
 
 drain result

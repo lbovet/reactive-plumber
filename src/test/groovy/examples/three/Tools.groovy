@@ -8,7 +8,7 @@ abstract class Tools extends Plumbing {
 
     static input = Flowable.range(1, 15).map Box.&wrap
 
-    static print = { Box box ->
+    static display = { Box box ->
         def context = box.getContext(FizzBuzz.class)
         println context == FizzBuzz.NONE ? box.getValue() : context
     }

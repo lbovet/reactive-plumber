@@ -5,11 +5,10 @@ import li.chee.rx.plumber.Box
 import li.chee.rx.plumber.Plumbing
 
 abstract class Tools extends Plumbing {
-    static input = Flowable.just("hello", 5, 3, "world").map Box.&wrap
+    static input = Flowable.just("hello", 5, 3, "world")
     static types = [
-            { it.getValue() instanceof String },
-            { it.getValue() instanceof Integer }
+            { it instanceof String },
+            { it instanceof Integer }
     ]
-    static line = { x, y -> x + ", " + y }
-    static print = { println it }
+    static line = { x, y -> x + " " + y }
 }

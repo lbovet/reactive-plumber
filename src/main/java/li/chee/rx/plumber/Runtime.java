@@ -203,7 +203,8 @@ public class Runtime {
                     public void visitMethodCallExpression(MethodCallExpression call) {
                         if (currentSubGraph != null) {
                             String method = call.getMethodAsString();
-                            boolean isCommon = method.equals("map") || method.equals("doOnNext") || method.equals("compose");
+                            boolean isCommon = method.equals("map") || method.equals("doOnNext") ||
+                                    method.equals("compose") || method.equals("doOnSuccess");
                             boolean isTo = method.equals("to");
                             StringBuilder label = new StringBuilder(isCommon || isTo ? "" : call.getMethodAsString());
                             List<Node> peers = new ArrayList<>();
@@ -277,7 +278,9 @@ public class Runtime {
                                         public void visitStaticMethodCallExpression(StaticMethodCallExpression call) {
                                             List<Node> sources = new ArrayList<>();
                                             StringBuilder label = new StringBuilder();
-                                            if(!call.getMethod().equals("zip")) {
+                                            if(!call.getMethod().equals("zip") &&
+                                                    !call.getMethod().equals("mapper") &&
+                                                    !call.getMethod().equals("bind")) {
                                                 label.append(html(statics(call.getMethodAsString())));
                                             }
                                             call.getArguments().visit(new CodeVisitorSupport() {
@@ -358,7 +361,7 @@ public class Runtime {
                                         public void visitVariableExpression(VariableExpression expression) {
                                             Node source = nodes.get(expression.getAccessedVariable());
                                             edge[0] = edge(source, target);
-                                            // edge[0].attr(Attribute.LABEL, "" + count.incrementAndGet());
+                                            edge[0].attr(Attribute.LABEL, "" + count.incrementAndGet());
                                             graph.edge(edge[0]);
                                         }
                                     });

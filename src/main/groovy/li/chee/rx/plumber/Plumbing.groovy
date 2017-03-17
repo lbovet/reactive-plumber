@@ -2,7 +2,6 @@ package li.chee.rx.plumber
 
 import io.reactivex.Flowable
 import io.reactivex.Single
-import io.reactivex.flowables.ConnectableFlowable
 import io.reactivex.flowables.GroupedFlowable
 import io.reactivex.functions.Consumer
 import io.reactivex.parallel.ParallelFlowable
@@ -22,14 +21,12 @@ abstract class Plumbing extends Flowable {
     static mapper = Box.&mapper
     static bind = Box.&flatMap
     static show() {
-        return show(null)
+        show(null)
     }
     static show(x) {
         x = x == null ? "": " "+x+":"
         return { println "("+Thread.currentThread().getId()+")"+x+" "+it }
     }
-
-    private static connectables = []
 
     static export(Object... objects) {
         return objects
@@ -63,9 +60,7 @@ abstract class Plumbing extends Flowable {
     static Flowable pipe(Closure closure) {
         def result = closure()
         result = normalize result
-        result = result.publish()
-        connectables.add result
-        result
+        result.share()
     }
 
     /**
@@ -101,8 +96,6 @@ abstract class Plumbing extends Flowable {
         def latch = new CountDownLatch(pipes.size())
         def lasts = fromIterable(pipes.toList()) map { it.last('').toFlowable() }
         merge(lasts).subscribe((Consumer){ latch.countDown() })
-        connectables.addAll pipes
-        connectables.reverse().each { println it; it.connect() }
         latch.await()
     }
 
