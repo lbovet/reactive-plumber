@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>li.chee.rx.plumber</groupId>
     <artifactId>rx-plumber</artifactId>
-    <version>0.1</version>
+    <version>0.2</version>
     <build>
         <plugins>
             <plugin>
