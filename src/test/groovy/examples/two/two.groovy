@@ -1,10 +1,12 @@
 package examples.two
 
-import static Tools.*
+import static examples.two.Tools.*
+import static io.reactivex.Flowable.merge
+import static li.chee.rx.plumber.Plumbing.*
 
 def marked = pipe {
     from input \
-    map parity \
+    map parity
 }
 
 def even = pipe {
@@ -22,7 +24,7 @@ def odd = pipe {
 }
 
 def result = pipe {
-    from concat(even, odd) doOnNext show()
+    from merge(even, odd) doOnNext show("total")
 }
 
 drain result

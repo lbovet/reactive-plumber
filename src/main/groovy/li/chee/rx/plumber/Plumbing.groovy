@@ -28,6 +28,8 @@ abstract class Plumbing extends Flowable {
         return { println "("+Thread.currentThread().getId()+")"+x+" "+it }
     }
 
+    private static connectables = []
+
     static export(Object... objects) {
         return objects
     }
@@ -38,7 +40,11 @@ abstract class Plumbing extends Flowable {
      * @return te Flowable
      */
     static Flowable from(it) {
-        Closure.isAssignableFrom(it.getClass()) ? it() :it
+        it = Closure.isAssignableFrom(it.getClass()) ? it() :it
+        if(!ParallelFlowable.isAssignableFrom(it.getClass())) {
+            it = it.observeOn(Schedulers.computation())
+        }
+        it
     }
 
     /**
@@ -60,7 +66,9 @@ abstract class Plumbing extends Flowable {
     static Flowable pipe(Closure closure) {
         def result = closure()
         result = normalize result
-        result.share()
+        result = result.publish()
+        connectables.add result
+        result
     }
 
     /**
@@ -96,6 +104,8 @@ abstract class Plumbing extends Flowable {
         def latch = new CountDownLatch(pipes.size())
         def lasts = fromIterable(pipes.toList()) map { it.last('').toFlowable() }
         merge(lasts).subscribe((Consumer){ latch.countDown() })
+        connectables.addAll pipes
+        connectables.reverse().each { it.connect() }
         latch.await()
     }
 
