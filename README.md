@@ -1,8 +1,8 @@
 # Rx-Plumber
 
-You want to use [RxJava](https://github.com/ReactiveX/RxJava) with a modular, readable and safe abstraction.
+You want to use [RxJava](https://github.com/ReactiveX/RxJava) or [Reactor](https://projectreactor.io/) Flux with a modular, readable and safe abstraction.
 
-Rx-Plumber let you write your RxJava plumbing in a Groovy DSL and also visualize it graphically.
+Rx-Plumber let you write your Flux/Flowable plumbing in a Groovy DSL and also visualize it graphically.
 
 It is intended to be used in Java or Groovy applications.
 
@@ -42,6 +42,7 @@ drain size, thread
 Built using these outstanding projects:
  - [Groovy](http://groovy-lang.org)
  - [RxJava](https://github.com/ReactiveX/RxJava)
+ - [Project Reactor](https://projectreactor.io)
  - [graphviz-java](https://github.com/nidi3/graphviz-java)
  
   
@@ -63,7 +64,7 @@ def items = pipe {
 }
 ```
 
-This defines a _pipe_, which is actually a _Flowable_. In the closure block, we simply chain normal RxJava methods. Here we count the bits in each numbers and convert them into strings.
+This defines a _pipe_, which is actually a _Flowable_ or _Flux_. In the closure block, we simply chain normal RxJava methods. Here we count the bits in each numbers and convert them into strings.
 
 ### From
 
@@ -113,7 +114,6 @@ The builtin pipe functions are
 | ------------------|-----------------------------|
 | pipe              | Declares a pipe. |
 | from              | Connects this pipe's input to a previously declared pipe. |
-| to                | Forwards to a reusable pipe part. |
 | drain             | Declare a pipe as terminal. |
 | split             | Returns an array of pipes filtered with a predicate array. |
 | parallel          | Processes the pipe in parallel. |
@@ -136,7 +136,8 @@ This library provides a monadic wrapper type _Box_ that allows to transport cont
 | unwrap            | Removes the box and returns the value. |
 | attach            | Add a context to a box. |
 | mapper            | Applies a function to a value inside a box. |
-| bind              | Flat-Map the box, apply a function on the value returning a box. | context           | Add a context to the box using the grouping key of grouped pipes. |
+| bind              | Flat-Map the box, apply a function on the value returning a box. |
+| context           | Add a context to the box using the grouping key of grouped pipes. |
 
 ## Examples
 
