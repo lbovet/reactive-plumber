@@ -205,7 +205,7 @@ public class Runtime {
                             String method = call.getMethodAsString();
                             boolean isCommon = method.equals("map") || method.equals("doOnNext") ||
                                     method.equals("compose") || method.equals("doOnSuccess");
-                            boolean isTo = method.equals("to");
+                            boolean isTo = method.equals("to") || method.equals("transform");
                             StringBuilder label = new StringBuilder(isCommon || isTo ? "" : call.getMethodAsString());
                             List<Node> peers = new ArrayList<>();
                             Node node = new Node();

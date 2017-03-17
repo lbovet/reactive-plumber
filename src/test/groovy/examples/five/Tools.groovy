@@ -1,10 +1,9 @@
 package examples.five
 
-import io.reactivex.Flowable
-import li.chee.rx.plumber.RxPlumbing
+import li.chee.rx.plumber.Plumbing
 
-abstract class Tools extends RxPlumbing {
-    static input = Flowable.just("hello", 5, 3, "world")
+abstract class Tools extends Plumbing {
+    static input = just("hello", 5, 3, "world")
     static types = [
             { it instanceof String },
             { it instanceof Integer }

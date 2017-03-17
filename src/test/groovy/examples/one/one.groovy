@@ -23,11 +23,11 @@ def size = pipe {
     from data \
     compose attach(count) \
     map renderSize \
-    to printer
+    transform printer
 }
 
 def thread = pipe {
-    from renderer to printer
+    from renderer transform printer
 }
 
 drain thread, size

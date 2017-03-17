@@ -1,19 +1,18 @@
 package examples.three
 
-import io.reactivex.Flowable
 import li.chee.rx.plumber.Box
 import li.chee.rx.plumber.RxPlumbing
 
 abstract class Tools extends RxPlumbing {
 
-    static input = Flowable.range(1, 15).map Box.&wrap
+    static input = range(1, 15).map Box.&wrap
 
     static display = { Box box ->
         def context = box.getContext(FizzBuzz.class)
         println context == FizzBuzz.NONE ? box.getValue() : context
     }
 
-    def static with(value) {
+    static with(value) {
         { it -> new Box(it).with(value) }
     }
 

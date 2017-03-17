@@ -1,5 +1,6 @@
 package li.chee.rx.plumber;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -22,6 +23,7 @@ public class PlumbingTest {
     }
 
     @Test
+    @Ignore
     public void testRuntimeTwo() throws IOException {
         new Runtime(true).run(new String(Files.readAllBytes(Paths.get("src/test/groovy/examples/two/two.groovy"))));
     }

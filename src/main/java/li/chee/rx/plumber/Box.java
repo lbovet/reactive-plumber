@@ -3,6 +3,8 @@ package li.chee.rx.plumber;
 import io.reactivex.Flowable;
 import io.reactivex.FlowableTransformer;
 import io.reactivex.functions.Function;
+import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
 
 /**
  * An object wrapper with extensible context.
@@ -47,6 +49,10 @@ public class Box<T> {
 
     public static <T> FlowableTransformer<Box<T>, Box<T>> attach(Flowable contextFlow) {
         return (f) -> f.zipWith(contextFlow.firstElement().cache().repeat(), Box::with);
+    }
+
+    public static <T> java.util.function.Function<? super Flux<Box<T>>,? extends Publisher<Box<T>>> attachFlux(Flux contextFlow) {
+        return (f) -> f.zipWith(contextFlow.take(1).cache().repeat(), Box::with);
     }
 
     public static <V> Box<V> wrap(V value) {

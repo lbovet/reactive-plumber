@@ -1,12 +1,13 @@
 package examples.four
 
-import io.reactivex.Flowable
 import li.chee.rx.plumber.Box
-import li.chee.rx.plumber.RxPlumbing
+import li.chee.rx.plumber.Plumbing
 
-abstract class Tools extends RxPlumbing {
+import java.util.function.Function
 
-    static input = Flowable.range(1, 15).map Box.&wrap
+abstract class Tools extends Plumbing {
+
+    static input = range(1, 15).map((Function)Box.&wrap)
 
     static enum FizzBuzz { NONE, FIZZ, BUZZ, FIZZBUZZ }
 
