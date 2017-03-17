@@ -1,11 +1,10 @@
 package examples.two
 
-import io.reactivex.Flowable
 import li.chee.rx.plumber.Box
 import li.chee.rx.plumber.Plumbing
 
 abstract class Tools extends Plumbing {
-    static input = Flowable.range(1, 5).map Box.&wrap
+    static input = range(1, 5).map Box.&wrap
     static parity = { Box box -> box.with(box.getValue() % 2 ? Parity.ODD : Parity.EVEN) }
     static context(value){
         { box -> box.getContext(value.getClass()) == value }

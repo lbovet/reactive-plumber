@@ -4,7 +4,7 @@ import static Tools.*
 
 def categories = pipe {
     from input \
-    to groups(fizzbuzz)
+    transform groups(fizzbuzz)
 }
 
 def counts = pipe each(categories) {

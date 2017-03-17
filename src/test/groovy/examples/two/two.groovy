@@ -1,7 +1,6 @@
 package examples.two
 
 import static examples.two.Tools.*
-import static li.chee.rx.plumber.Plumbing.*
 
 def marked = pipe {
     from input \
