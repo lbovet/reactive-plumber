@@ -313,8 +313,12 @@ public class Runtime {
                                                 }
                                             } else {
                                                 currentSubGraph.node(node[0]);
+                                                AtomicInteger i = new AtomicInteger();
                                                 sources.forEach(source -> {
                                                     Edge edge = edge(source, node[0]);
+                                                    if(call.getMethod().equals("concat")) {
+                                                        edge.attr(Attribute.LABEL, ""+i.incrementAndGet());
+                                                    }
                                                     graph.edge(edge);
                                                 });
                                             }

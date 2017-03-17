@@ -1,7 +1,6 @@
 package examples.two
 
 import static examples.two.Tools.*
-import static io.reactivex.Flowable.merge
 import static li.chee.rx.plumber.Plumbing.*
 
 def marked = pipe {
@@ -16,7 +15,7 @@ def even = pipe {
     map with(EVEN)
 }
 
-def odd = pipe {
+def odd = pipe cache {
     from marked \
     filter context(ODD) \
     count() \
@@ -24,7 +23,7 @@ def odd = pipe {
 }
 
 def result = pipe {
-    from merge(even, odd) doOnNext show("total")
+    from concat(even, odd) doOnNext show("total")
 }
 
 drain result

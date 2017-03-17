@@ -72,6 +72,31 @@ abstract class Plumbing extends Flowable {
     }
 
     /**
+     * Syntactic sugar when dealing with existing Flowables.
+     * @param a Flowable
+     * @return the same Flowable, untouched.
+     */
+    static Flowable pipe(Flowable f) {
+        f
+    }
+
+    /**
+     * Makes a pipe cache already emitted event in order to replay them later, useful for {@code concat}.
+     * Use it as a keyword just after {@code pipe}.
+     *
+     * @param a closure
+     * @return a Flowable
+     */
+    static Flowable cache(Closure closure) {
+        def result = closure().cache()
+        result.subscribe()
+        if(Single.isAssignableFrom(result.getClass())) {
+            result = result.toFlowable()
+        }
+        result
+    }
+
+    /**
      * Parallelizes processing on the computation scheduler.
      * @param input a flowable to parallelize
      * @return the parallelized flowable
