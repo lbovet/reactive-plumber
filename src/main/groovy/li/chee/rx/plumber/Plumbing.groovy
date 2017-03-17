@@ -131,6 +131,7 @@ abstract class Plumbing extends Flowable {
         merge(lasts).subscribe((Consumer){ latch.countDown() })
         connectables.addAll pipes
         connectables.reverse().each { it.connect() }
+        connectables.clear()
         latch.await()
     }
 
