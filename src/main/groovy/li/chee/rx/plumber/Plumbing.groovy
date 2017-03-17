@@ -129,6 +129,7 @@ abstract class Plumbing extends Flux {
         merge(lasts).subscribe((Consumer){ latch.countDown() })
         pipes.findAll { it instanceof ConnectableFlux } forEach { connectables.add it }
         connectables.reverse().each { ((ConnectableFlux)it).connect() }
+        connectables.clear()
         latch.await()
     }
 
