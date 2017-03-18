@@ -1,4 +1,4 @@
-# Reactive-Plumber
+# Reactive Plumber
 
 You want to use [RxJava](https://github.com/ReactiveX/RxJava) or [Reactor](https://projectreactor.io/) Flux with a modular, readable and safe abstraction.
 
