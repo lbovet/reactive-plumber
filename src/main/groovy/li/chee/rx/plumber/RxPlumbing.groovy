@@ -32,17 +32,25 @@ abstract class Plumbing extends Flux {
         return objects
     }
 
+    private static Flux internalFrom(it) {
+        it = Closure.isAssignableFrom(it.getClass()) ? it() :it
+        if(!ParallelFlux.isAssignableFrom(it.getClass())) {
+            it = ((Flux)it).publishOn(Schedulers.parallel())
+        }
+        it
+    }
+
     /**
      * Resolves a source. It can be a Flux or a closure returning a Flux.
      * @param it the source or its generating function.
      * @return te Flux
      */
     static Flux from(it) {
-        it = Closure.isAssignableFrom(it.getClass()) ? it() :it
-        if(!ParallelFlux.isAssignableFrom(it.getClass())) {
-            it = ((Flux)it).publishOn(Schedulers.parallel())
-        }
-        it
+          internalFrom it
+    }
+
+    static Flux from(Flux f) {
+        internalFrom f
     }
 
     /**
