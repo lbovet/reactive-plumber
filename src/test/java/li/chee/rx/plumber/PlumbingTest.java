@@ -23,7 +23,6 @@ public class PlumbingTest {
     }
 
     @Test
-    @Ignore
     public void testRuntimeTwo() throws IOException {
         new Runtime(true).run(new String(Files.readAllBytes(Paths.get("src/test/groovy/examples/two/two.groovy"))));
     }
