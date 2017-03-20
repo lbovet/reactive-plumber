@@ -12,12 +12,9 @@ import java.util.function.Function
  */
 abstract class Plumbing extends Flux {
 
-    // Box utilities
-    static wrap = Box.&wrap
-    static unwrap = Box.&unwrap
-    static attach = Box.&attachFlux
-    static mapper = Box.&mapper
-    static bind = Box.&flatMap
+    static value(Flux f) {
+        f.next().cache().repeat()
+    }
     static show() {
         show(null)
     }

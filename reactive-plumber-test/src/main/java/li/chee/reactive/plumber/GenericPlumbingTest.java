@@ -1,5 +1,6 @@
 package li.chee.reactive.plumber;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -14,7 +15,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * Tests the plumbing tools using groovy scripts.
  */
-public class PlumbingTest {
+public class GenericPlumbingTest {
 
     private static String ROOT = "../reactive-plumber-test/src/main/resources/examples";
 
@@ -39,6 +40,7 @@ public class PlumbingTest {
     }
 
     @Test
+    @Ignore
     public void testRuntimeFive() throws IOException {
         new Runtime(true).run(new String(Files.readAllBytes(Paths.get(ROOT+"/five/five.groovy"))));
     }

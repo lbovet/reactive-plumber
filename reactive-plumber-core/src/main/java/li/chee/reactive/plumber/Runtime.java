@@ -202,12 +202,15 @@ public class Runtime {
                         }
                     }
 
+                    private List<String> commonMethods =
+                            Arrays.asList("map", "flatMap", "doOnNext", "compose", "doOnSuccess", "to", "transform", "zipWith",
+                            "value");
+
                     @Override
                     public void visitMethodCallExpression(MethodCallExpression call) {
                         if (currentSubGraph != null) {
                             String method = call.getMethodAsString();
-                            boolean isCommon = method.equals("map") || method.equals("doOnNext") ||
-                                    method.equals("compose") || method.equals("doOnSuccess");
+                            boolean isCommon = commonMethods.contains(method);
                             boolean isTo = (method.equals("to") || method.equals("transform") || method.equals("compose")) &&
                                     VariableExpression.class.isAssignableFrom(
                                             ((ArgumentListExpression)call.getArguments()).getExpression(0).getClass());
@@ -218,16 +221,16 @@ public class Runtime {
                                     new CodeVisitorSupport() {
                                         @Override
                                         public void visitStaticMethodCallExpression(StaticMethodCallExpression call) {
-                                            label.append(" ").append(statics(call.getMethodAsString()));
+                                            if(!commonMethods.contains(call.getMethodAsString())) {
+                                                label.append(" ").append(statics(call.getMethodAsString()));
+                                            }
                                             call.getArguments().visit(this);
                                         }
 
                                         @Override
                                         public void visitConstantExpression(ConstantExpression expression) {
-                                            boolean str = expression.getType().getName().equals("java.lang.String");
-                                            label.append(" ").append(str?"'":"")
-                                                    .append(statics(expression.getValue().toString()))
-                                                    .append((str?"'":""));
+                                            label.append(" ")
+                                                    .append(statics(expression.getValue().toString()));
                                         }
 
                                         @Override
@@ -280,9 +283,7 @@ public class Runtime {
                                         public void visitStaticMethodCallExpression(StaticMethodCallExpression call) {
                                             List<Node> sources = new ArrayList<>();
                                             StringBuilder label = new StringBuilder();
-                                            if(!call.getMethod().equals("zip") &&
-                                                    !call.getMethod().equals("mapper") &&
-                                                    !call.getMethod().equals("bind")) {
+                                            if(!commonMethods.contains(call.getMethod())) {
                                                 label.append(html(statics(call.getMethodAsString())));
                                             }
                                             call.getArguments().visit(new CodeVisitorSupport() {

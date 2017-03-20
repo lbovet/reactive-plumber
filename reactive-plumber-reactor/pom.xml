@@ -29,6 +29,18 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>li.chee.reactive.plumber</groupId>
+            <artifactId>reactive-plumber-test</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>li.chee.reactive.plumber</groupId>
+                    <artifactId>reactive-plumber-rxjava</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-core</artifactId>
         </dependency>

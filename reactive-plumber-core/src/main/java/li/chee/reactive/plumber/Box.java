@@ -1,5 +1,6 @@
 package li.chee.reactive.plumber;
 
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -50,6 +51,10 @@ public class Box<T> {
         } else {
             return new Box<>(value);
         }
+    }
+
+    public static <V,C> Box<V> attach(Box<V> box, C context) {
+        return box.with(context);
     }
 
     public <U> Box<U> map(Function<T, U> f) {

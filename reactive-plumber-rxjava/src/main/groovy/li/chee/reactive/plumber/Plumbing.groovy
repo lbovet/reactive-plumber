@@ -14,12 +14,10 @@ import java.util.concurrent.CountDownLatch
  */
 abstract class Plumbing extends Flowable {
 
-    // Box utilities
-    static wrap = Box.&wrap
-    static unwrap = Box.&unwrap
-    static attach = Box.&attach
-    static mapper = Box.&mapper
-    static bind = Box.&flatMap
+    static value(Flowable f) {
+        f.firstElement().cache().repeat()
+    }
+
     static show() {
         show(null)
     }
