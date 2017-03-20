@@ -6,7 +6,7 @@
     <groupId>li.chee.reactive.plumber</groupId>
     <artifactId>reactive-plumber</artifactId>
     <packaging>pom</packaging>
-    <version>0.2</version>
+    <version>0.3</version>
     <build>
         <plugins>
             <plugin>
