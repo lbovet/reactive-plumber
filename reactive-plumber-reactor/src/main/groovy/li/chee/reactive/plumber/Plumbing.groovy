@@ -10,7 +10,7 @@ import java.util.function.Function
 /**
  * Base piping tools.
  */
-abstract class ReactorPlumbing extends Flux {
+abstract class Plumbing extends Flux {
 
     // Box utilities
     static wrap = Box.&wrap

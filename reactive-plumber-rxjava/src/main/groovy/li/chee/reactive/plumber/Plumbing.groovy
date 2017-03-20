@@ -12,7 +12,7 @@ import java.util.concurrent.CountDownLatch
 /**
  * Base piping tools.
  */
-abstract class RxPlumbing extends Flowable {
+abstract class Plumbing extends Flowable {
 
     // Box utilities
     static wrap = Box.&wrap
