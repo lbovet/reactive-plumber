@@ -1,6 +1,6 @@
 package examples.two
 
-import static examples.two.Tools.*
+import static Tools.*
 
 def marked = pipe {
     from input \

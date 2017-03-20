@@ -97,7 +97,7 @@ You will expose your own functions to be used in the plumbing. Do that in a sub-
 
 _Tools.groovy_:
 ```groovy
-import li.chee.rx.plumber.Plumbing
+import Plumbing
 
 abstract class Tools extends Plumbing {
     static input = Domain.&input

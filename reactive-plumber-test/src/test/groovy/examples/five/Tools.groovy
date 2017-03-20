@@ -1,6 +1,6 @@
 package examples.five
 
-import li.chee.rx.plumber.Plumbing
+import li.chee.reactive.plumber.Plumbing
 
 abstract class Tools extends Plumbing {
     static input = just("hello", 5, 3, "world")

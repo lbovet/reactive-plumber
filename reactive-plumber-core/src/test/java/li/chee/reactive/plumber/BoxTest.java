@@ -90,8 +90,8 @@ public class BoxTest {
 
         Flowable.just(1, 2)
                 .map(Box::wrap)
-                .map(Box.mapper(x -> x+1))
-                .map(Box.binder(x -> wrap(x+1).with("hello")))
+                .map(mapper(x -> x+1))
+                .map(binder(x -> wrap(x+1).with("hello")))
                 .map(b -> b.getContext(String.class) + " " + b.getValue())
                 .test()
                 .assertValues("hello 3", "hello 4");
