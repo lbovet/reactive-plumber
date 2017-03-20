@@ -3,13 +3,13 @@ package examples.three
 import static Tools.*
 
 def numbers = pipe {
-    from input \
-    map fizzbuzz
+    from Tools.input \
+    map Tools.fizzbuzz
 }
 
 def groups = pipe {
     from numbers \
-    groupBy context
+    groupBy Tools.context
 }
 
 def counts = pipe each(groups) {
@@ -20,12 +20,12 @@ def counts = pipe each(groups) {
 
 def statistics = pipe {
     from concat(counts) \
-    doOnNext stats
+    doOnNext Tools.stats
 }
 
 def output = pipe {
     from numbers \
-    doOnNext display
+    doOnNext Tools.display
 }
 
 drain output, statistics

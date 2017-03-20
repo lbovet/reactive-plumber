@@ -3,20 +3,20 @@ package examples.five
 import static Tools.*
 
 def data = pipe {
-    from input
+    from Tools.input
 }
 
-def (strings, numbers) = split(types, data)
+def (strings, numbers) = split(Tools.types, data)
 
 def stringPrint = pipe {
     from strings \
-    reduce("strings:", line) \
+    reduce("strings:", Tools.line) \
     doOnSuccess show()
 }
 
 def numberPrint = pipe {
     from numbers \
-    reduce("numbers:", line) \
+    reduce("numbers:", Tools.line) \
     doOnSuccess show()
 }
 

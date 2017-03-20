@@ -3,8 +3,8 @@ package examples.four
 import static Tools.*
 
 def categories = pipe {
-    from input \
-    transform groups(fizzbuzz)
+    from Tools.input \
+    transform groups(Tools.fizzbuzz)
 }
 
 def counts = pipe each(categories) {
@@ -15,7 +15,7 @@ def counts = pipe each(categories) {
 
 def statistics = pipe {
     from concat(counts) \
-    doOnNext stats
+    doOnNext Tools.stats
 }
 
 drain statistics

@@ -3,7 +3,7 @@ package examples.one
 import static Tools.*
 
 def data = pipe {
-    parallel from(input) \
+    parallel from(Tools.input) \
     doOnNext show() \
     map wrap
 }
@@ -15,7 +15,7 @@ def printer = {
 def renderer = pipe {
     from(data) \
     compose parallelize \
-    map renderThread
+    map Tools.renderThread
 }
 
 def count = pipe {
@@ -25,7 +25,7 @@ def count = pipe {
 def size = pipe {
     from(data) \
     compose attach(count) \
-    map renderSize \
+    map Tools.renderSize \
     compose printer
 }
 
