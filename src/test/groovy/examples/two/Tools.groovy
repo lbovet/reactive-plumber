@@ -2,9 +2,9 @@ package examples.two
 
 import io.reactivex.Flowable
 import li.chee.rx.plumber.Box
-import li.chee.rx.plumber.Plumbing
+import li.chee.rx.plumber.RxPlumbing
 
-abstract class Tools extends Plumbing {
+abstract class Tools extends RxPlumbing {
     static input = Flowable.range(1, 5).map Box.&wrap
     static parity = { Box box -> box.with(box.getValue() % 2 ? Parity.ODD : Parity.EVEN) }
     static context(value){

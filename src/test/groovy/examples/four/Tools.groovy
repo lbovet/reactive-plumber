@@ -2,9 +2,9 @@ package examples.four
 
 import io.reactivex.Flowable
 import li.chee.rx.plumber.Box
-import li.chee.rx.plumber.Plumbing
+import li.chee.rx.plumber.RxPlumbing
 
-abstract class Tools extends Plumbing {
+abstract class Tools extends RxPlumbing {
 
     static input = Flowable.range(1, 15).map Box.&wrap
 
