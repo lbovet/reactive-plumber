@@ -1,8 +1,8 @@
 package li.chee.reactive.plumber;
 
-import io.reactivex.Flowable;
-import io.reactivex.functions.Function;
 import org.junit.Test;
+
+import java.util.function.Function;
 
 import static org.junit.Assert.*;
 import static li.chee.reactive.plumber.Box.*;
@@ -76,33 +76,5 @@ public class BoxTest {
         b1 = wrap("hi").flatMap(f).flatMap(g);
         b2 = wrap("hi").flatMap(s -> f.apply(s).flatMap(g));
         assertTrue(equals(b1, b2));
-    }
-
-    @Test
-    public void testStream() {
-        Flowable.just(1, 2)
-                .map(Box::wrap)
-                .map(b -> b.with("hello"))
-                .map(b -> b.copy(b.getValue() + 1))
-                .map(b -> b.getContext(String.class) + " " + b.getValue())
-                .test()
-                .assertValues("hello 2", "hello 3");
-
-        Flowable.just(1, 2)
-                .map(Box::wrap)
-                .map(mapper(x -> x+1))
-                .map(binder(x -> wrap(x+1).with("hello")))
-                .map(b -> b.getContext(String.class) + " " + b.getValue())
-                .test()
-                .assertValues("hello 3", "hello 4");
-
-        Flowable.just(1, 2)
-                .map(Box::wrap)
-                .map(Box::wrap)
-                .compose(Box.attach(Flowable.just("hello")))
-                .map(b -> b.getContext(String.class) + " " + b.getValue())
-                .test()
-                .assertValues("hello 1", "hello 2");
-
     }
 }
