@@ -100,9 +100,9 @@ abstract class Plumbing extends Flux {
      * @param input a flux to parallelize
      * @return the parallelized flux
      */
-    static parallelize= { it.parallel().runOn(Schedulers.parallel()) }
+    static parallel= { it.parallel().runOn(Schedulers.parallel()) }
 
-    static parallel = { it.publishOn(Schedulers.parallel()) }
+    static concurrent = { it.publishOn(Schedulers.parallel()) }
 
     /**
      * Takes a flux of fluxs and apply a pipe to each one.

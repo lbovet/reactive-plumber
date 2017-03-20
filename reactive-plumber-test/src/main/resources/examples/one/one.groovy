@@ -3,7 +3,7 @@ package examples.one
 import static Tools.*
 
 def data = pipe {
-    from(input) \
+    concurrent from(input) \
     map wrap
 }
 
@@ -12,7 +12,7 @@ def printer = {
 }
 
 def renderer = pipe {
-    from(data) \
+    parallel from(data) \
     map renderThread
 }
 

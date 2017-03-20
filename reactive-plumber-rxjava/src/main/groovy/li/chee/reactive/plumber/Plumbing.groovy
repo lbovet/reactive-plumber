@@ -38,11 +38,7 @@ abstract class Plumbing extends Flowable {
      * @return te Flowable
      */
     static Flowable from(it) {
-        it = Closure.isAssignableFrom(it.getClass()) ? it() :it
-        if(!ParallelFlowable.isAssignableFrom(it.getClass())) {
-            it = it.observeOn(Schedulers.computation())
-        }
-        it
+        Closure.isAssignableFrom(it.getClass()) ? it() :it
     }
 
     /**
@@ -99,9 +95,9 @@ abstract class Plumbing extends Flowable {
      * @param input a flowable to parallelize
      * @return the parallelized flowable
      */
-    static ParallelFlowable parallel(input) {
-        input.parallel().runOn(Schedulers.computation())
-    }
+    static parallel = { it.parallel().runOn(Schedulers.computation()) }
+
+    static concurrent = { it.observeOn(Schedulers.computation()) }
 
     /**
      * Takes a flowable of flowables and apply a pipe to each one.

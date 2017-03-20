@@ -375,6 +375,8 @@ public class Runtime {
                             if (count.get() == 1) {
                                 edge[0].attr(Attribute.LABEL, "");
                             }
+                        } else if (call.getMethodAsString().equals("concurrent")) {
+                            currentSubGraph.attr(Attribute.LABEL, "// " + currentSubGraph.attr(Attribute.LABEL));
                         } else if (call.getMethodAsString().equals("parallel")) {
                             currentSubGraph.attr(Attribute.LABEL, currentSubGraph.attr(Attribute.LABEL) + " //");
                         } else if (call.getMethodAsString().equals("each")) {
