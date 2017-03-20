@@ -1,4 +1,4 @@
-package li.chee.rx.plumber;
+package li.chee.reactive.plumber;
 
 import org.junit.Test;
 

@@ -1,7 +1,7 @@
 package examples.three
 
-import li.chee.rx.plumber.Box
-import li.chee.rx.plumber.RxPlumbing
+import Box
+import li.chee.reactive.plumber.RxPlumbing
 
 abstract class Tools extends RxPlumbing {
 

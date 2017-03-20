@@ -1,6 +1,6 @@
 package examples.one;
 
-import li.chee.rx.plumber.Box;
+import li.chee.reactive.plumber.Box;
 
 /**
  * Example domain

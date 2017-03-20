@@ -1,11 +1,11 @@
-package li.chee.rx.plumber;
+package li.chee.reactive.plumber;
 
 import io.reactivex.Flowable;
 import io.reactivex.functions.Function;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
-import static li.chee.rx.plumber.Box.*;
+import static li.chee.reactive.plumber.Box.*;
 
 public class BoxTest {
 

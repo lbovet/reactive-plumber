@@ -1,7 +1,7 @@
 package examples.two
 
-import li.chee.rx.plumber.Box
-import li.chee.rx.plumber.Plumbing
+import Box
+import li.chee.reactive.plumber.Plumbing
 
 abstract class Tools extends Plumbing {
     static input = range(1, 5).map Box.&wrap

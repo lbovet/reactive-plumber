@@ -1,7 +1,7 @@
 package examples.four
 
-import li.chee.rx.plumber.Box
-import li.chee.rx.plumber.Plumbing
+import Box
+import li.chee.reactive.plumber.Plumbing
 
 import java.util.function.Function
 

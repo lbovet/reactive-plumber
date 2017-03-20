@@ -15,7 +15,6 @@
         <dependency>
             <groupId>li.chee.reactive.plumber</groupId>
             <artifactId>reactive-plumber-core</artifactId>
-            <version>0.2</version>
         </dependency>
         <dependency>
             <groupId>io.reactivex.rxjava2</groupId>
