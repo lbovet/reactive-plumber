@@ -1,6 +1,6 @@
 package examples.two
 
-import Box
+import li.chee.reactive.plumber.Box
 import li.chee.reactive.plumber.Plumbing
 
 abstract class Tools extends Plumbing {

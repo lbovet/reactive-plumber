@@ -8,7 +8,7 @@ c = Tools.class
 c[v] = { just 1, 2, 3 }
 
 def a = pipe {
-    from Tools.input \
+    from input \
     map { it * 2 }
 }
 

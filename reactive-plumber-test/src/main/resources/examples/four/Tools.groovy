@@ -1,6 +1,6 @@
 package examples.four
 
-import Box
+import li.chee.reactive.plumber.Box
 import li.chee.reactive.plumber.Plumbing
 
 import java.util.function.Function

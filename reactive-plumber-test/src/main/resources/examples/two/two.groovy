@@ -3,22 +3,22 @@ package examples.two
 import static Tools.*
 
 def marked = pipe {
-    from Tools.input \
-    map Tools.parity
+    from input \
+    map parity
 }
 
 def even = pipe {
     from marked \
-    filter context(Tools.EVEN) \
+    filter context(EVEN) \
     count() \
-    map with(Tools.EVEN)
+    map with(EVEN)
 }
 
 def odd = pipe cache {
     from marked \
-    filter context(Tools.ODD) \
+    filter context(ODD) \
     count() \
-    map with(Tools.ODD)
+    map with(ODD)
 }
 
 def result = pipe {

@@ -1,9 +1,9 @@
 package examples.three
 
-import Box
-import li.chee.reactive.plumber.RxPlumbing
+import li.chee.reactive.plumber.Box
+import li.chee.reactive.plumber.Plumbing
 
-abstract class Tools extends RxPlumbing {
+abstract class Tools extends Plumbing {
 
     static input = range(1, 15).map Box.&wrap
 
