@@ -1,23 +1,21 @@
 package li.chee.rx.plumber
 
-import io.reactivex.Flowable
-import io.reactivex.Single
-import io.reactivex.flowables.GroupedFlowable
-import io.reactivex.functions.Consumer
-import io.reactivex.parallel.ParallelFlowable
-import io.reactivex.schedulers.Schedulers
+import reactor.core.publisher.*
+import reactor.core.scheduler.Schedulers
 
 import java.util.concurrent.CountDownLatch
+import java.util.function.Consumer
+import java.util.function.Function
 
 /**
  * Base piping tools.
  */
-abstract class RxPlumbing extends Flowable {
+abstract class ReactorPlumbing extends Flux {
 
     // Box utilities
     static wrap = Box.&wrap
     static unwrap = Box.&unwrap
-    static attach = Box.&attach
+    static attach = Box.&attachFlux
     static mapper = Box.&mapper
     static bind = Box.&flatMap
     static show() {
@@ -34,36 +32,40 @@ abstract class RxPlumbing extends Flowable {
         return objects
     }
 
-    /**
-     * Resolves a source. It can be a Flowable or a closure returning a Flowable.
-     * @param it the source or its generating function.
-     * @return te Flowable
-     */
-    static Flowable from(it) {
-        it = Closure.isAssignableFrom(it.getClass()) ? it() :it
-        if(!ParallelFlowable.isAssignableFrom(it.getClass())) {
-            it = it.observeOn(Schedulers.computation())
-        }
-        it
+    private static Flux internalFrom(it) {
+        Closure.isAssignableFrom(it.getClass()) ? it() :it
     }
 
     /**
-     * Extract the GroupedFlowable key.
+     * Resolves a source. It can be a Flux or a closure returning a Flux.
+     * @param it the source or its generating function.
+     * @return te Flux
+     */
+    static Flux from(it) {
+          internalFrom it
+    }
+
+    static Flux from(Flux f) {
+        internalFrom f
+    }
+
+    /**
+     * Extract the GroupedFlux key.
      * @param it
      * @return the key
      */
     static key(it) {
-        it.getKey()
+        it.key()
     }
 
     /**
-     * Composes a Flowable from a closure that returns a Flowable or a Single.
-     * It also sequentializes parallelized Flowables.
+     * Composes a Flux from a closure that returns a Flux or a Single.
+     * It also sequentializes parallelized Fluxs.
      * @param input a a closure
      * @param a closure
-     * @return a Flowable
+     * @return a Flux
      */
-    static Flowable pipe(Closure closure) {
+    static Flux pipe(Closure closure) {
         def result = closure()
         result = normalize result
         result = result.publish()
@@ -72,11 +74,11 @@ abstract class RxPlumbing extends Flowable {
     }
 
     /**
-     * Syntactic sugar when dealing with existing Flowables.
-     * @param a Flowable
-     * @return the same Flowable, untouched.
+     * Syntactic sugar when dealing with existing Fluxs.
+     * @param a Flux
+     * @return the same Flux, untouched.
      */
-    static Flowable pipe(Flowable f) {
+    static Flux pipe(Flux f) {
         f
     }
 
@@ -85,34 +87,34 @@ abstract class RxPlumbing extends Flowable {
      * Use it as a keyword just after {@code pipe}.
      *
      * @param a closure
-     * @return a Flowable
+     * @return a Flux
      */
-    static Flowable cache(Closure closure) {
+    static Flux cache(Closure closure) {
         def result = closure().cache()
         result.subscribe()
-        if(Single.isAssignableFrom(result.getClass())) {
-            result = result.toFlowable()
+        if(Mono.isAssignableFrom(result.getClass())) {
+            result = result.flux()
         }
         result
     }
 
     /**
      * Parallelizes processing on the computation scheduler.
-     * @param input a flowable to parallelize
-     * @return the parallelized flowable
+     * @param input a flux to parallelize
+     * @return the parallelized flux
      */
-    static ParallelFlowable parallel(input) {
-        input.parallel().runOn(Schedulers.computation())
-    }
+    static parallelize= { it.parallel().runOn(Schedulers.parallel()) }
+
+    static parallel = { it.publishOn(Schedulers.parallel()) }
 
     /**
-     * Takes a flowable of flowables and apply a pipe to each one.
+     * Takes a flux of fluxs and apply a pipe to each one.
      *
      * @param streams
      * @param closure
      * @return
      */
-    static each(Flowable streams, Closure closure ) {
+    static each(Flux streams, Closure closure ) {
         return {
             streams.map { f ->
                 normalize closure(f)
@@ -125,28 +127,29 @@ abstract class RxPlumbing extends Flowable {
      * @param pipes the terminal pipes
      * @return nothing
      */
-    static drain(Flowable... pipes) {
+    static drain(Flux... pipes) {
         def latch = new CountDownLatch(pipes.size())
-        def lasts = fromIterable(pipes.toList()) map { it.last('').toFlowable() }
+        def lasts = fromIterable(pipes.toList()) map { it.last('').flux() }
         merge(lasts).subscribe((Consumer){ latch.countDown() })
-        connectables.addAll pipes
-        connectables.reverse().each { it.connect() }
+        pipes.findAll { it instanceof ConnectableFlux } forEach { connectables.add it }
+        connectables.reverse().each { ((ConnectableFlux)it).connect() }
+        connectables.clear()
         latch.await()
     }
 
     /**
      * Groups by a function returning a context and also add a mapper setting the context.
      * @param fn function returning a context
-     * @return a grouped flowable
+     * @return a grouped flux
      */
-    static groups(fn) {
-        return { Flowable f -> f.map( { Box box -> box.with(fn(box)) }).groupBy(fn) }
+    static Function groups(fn) {
+        return { Flux f -> f.map( { Box box -> box.with(fn(box)) }).groupBy((Function)fn) }
     }
 
     /**
-     * Split a flowable according to a list of predicates
+     * Split a flux according to a list of predicates
      * @param predicates
-     * @param f the flowable to split
+     * @param f the flux to split
      * @return
      */
     static split(predicates, f) {
@@ -154,11 +157,11 @@ abstract class RxPlumbing extends Flowable {
     }
 
     /**
-     * Function to set the context of a box to the key of a grouped flowable.
-     * @param flowable
+     * Function to set the context of a box to the key of a grouped flux.
+     * @param flux
      * @return
      */
-    static context(flowable) {
+    static context(flux) {
         return { Object it ->
             Box box
             if (it instanceof Box) {
@@ -166,15 +169,15 @@ abstract class RxPlumbing extends Flowable {
             } else {
                 box = new Box(it)
             }
-            return box.with(((GroupedFlowable)flowable).getKey())
+            return box.with(((GroupedFlux)flux).key())
         }
     }
 
-    private static normalize(f) {
-        if (ParallelFlowable.isAssignableFrom(f.getClass())) {
+    private static Flux normalize(f) {
+        if (ParallelFlux.isAssignableFrom(f.getClass())) {
             f.sequential()
-        } else if (Single.isAssignableFrom(f.getClass())) {
-            f.toFlowable()
+        } else if (Mono.isAssignableFrom(f.getClass())) {
+            f.flux()
         } else {
             f
         }
