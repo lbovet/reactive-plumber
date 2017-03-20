@@ -3,31 +3,34 @@ package examples.one
 import static Tools.*
 
 def data = pipe {
-    from input map wrap
+    parallel from(input) \
+    doOnNext show() \
+    map wrap
 }
 
 def printer = {
-    from it doOnNext show()
+    from(it) doOnNext show()
 }
 
 def renderer = pipe {
-    parallel from(data) \
+    from(data) \
+    compose parallelize \
     map renderThread
 }
 
 def count = pipe {
-    from data count()
+    parallel from(data) count()
 }
 
 def size = pipe {
-    from data \
+    from(data) \
     compose attach(count) \
     map renderSize \
-    transform printer
+    compose printer
 }
 
 def thread = pipe {
-    from renderer transform printer
+    from renderer compose printer
 }
 
 drain thread, size
