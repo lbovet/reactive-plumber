@@ -205,7 +205,9 @@ public class Runtime {
                             String method = call.getMethodAsString();
                             boolean isCommon = method.equals("map") || method.equals("doOnNext") ||
                                     method.equals("compose") || method.equals("doOnSuccess");
-                            boolean isTo = method.equals("to") || method.equals("transform");
+                            boolean isTo = (method.equals("to") || method.equals("transform") || method.equals("compose")) &&
+                                    VariableExpression.class.isAssignableFrom(
+                                            ((ArgumentListExpression)call.getArguments()).getExpression(0).getClass());
                             StringBuilder label = new StringBuilder(isCommon || isTo ? "" : call.getMethodAsString());
                             List<Node> peers = new ArrayList<>();
                             Node node = new Node();
@@ -220,7 +222,7 @@ public class Runtime {
                                         @Override
                                         public void visitConstantExpression(ConstantExpression expression) {
                                             boolean str = expression.getType().getName().equals("java.lang.String");
-                                            label.append(" "+(str?"'":""))
+                                            label.append(" ").append(str?"'":"")
                                                     .append(statics(expression.getValue().toString()))
                                                     .append((str?"'":""));
                                         }
@@ -237,9 +239,6 @@ public class Runtime {
                                         }
                                     });
                             node.attr(Attribute.LABEL, html(label.toString().trim()));
-                            if (isCommon) {
-                                node.attr(Attribute.FONTNAME, "arial");
-                            }
                             if (isTo && peers.size() > 0) {
                                 node.attr(Attribute.STYLE, StyleAttr.ROUNDED)
                                         .attr(Attribute.FONTCOLOR, theme.box);

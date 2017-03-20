@@ -33,11 +33,7 @@ abstract class Plumbing extends Flux {
     }
 
     private static Flux internalFrom(it) {
-        it = Closure.isAssignableFrom(it.getClass()) ? it() :it
-        if(!ParallelFlux.isAssignableFrom(it.getClass())) {
-            it = ((Flux)it).publishOn(Schedulers.parallel())
-        }
-        it
+        Closure.isAssignableFrom(it.getClass()) ? it() :it
     }
 
     /**
@@ -107,9 +103,9 @@ abstract class Plumbing extends Flux {
      * @param input a flux to parallelize
      * @return the parallelized flux
      */
-    static ParallelFlux parallel(input) {
-        input.parallel().runOn(Schedulers.parallel())
-    }
+    static parallelize= { it.parallel().runOn(Schedulers.parallel()) }
+
+    static parallel = { it.publishOn(Schedulers.parallel()) }
 
     /**
      * Takes a flux of fluxs and apply a pipe to each one.
