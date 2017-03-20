@@ -1,10 +1,6 @@
-package li.chee.rx.plumber;
+package li.chee.reactive.plumber;
 
-import io.reactivex.Flowable;
-import io.reactivex.FlowableTransformer;
-import io.reactivex.functions.Function;
-import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
+import java.util.function.Function;
 
 /**
  * An object wrapper with extensible context.
@@ -47,14 +43,6 @@ public class Box<T> {
         return new Box<>(value, this.contextHolder);
     }
 
-    public static <T> FlowableTransformer<Box<T>, Box<T>> attach(Flowable contextFlow) {
-        return (f) -> f.zipWith(contextFlow.firstElement().cache().repeat(), Box::with);
-    }
-
-    public static <T> java.util.function.Function<? super Flux<Box<T>>,? extends Publisher<Box<T>>> attachFlux(Flux contextFlow) {
-        return (f) -> f.zipWith(contextFlow.take(1).cache().repeat(), Box::with);
-    }
-
     public static <V> Box<V> wrap(V value) {
         if(value instanceof Box) {
             @SuppressWarnings("unchecked") Box<V> result = (Box<V>)value;
@@ -64,7 +52,7 @@ public class Box<T> {
         }
     }
 
-    public <U> Box<U> map(Function<T, U> f) throws Exception {
+    public <U> Box<U> map(Function<T, U> f) {
         return copy(f.apply(getValue()));
     }
 
@@ -72,7 +60,7 @@ public class Box<T> {
         return box -> box.map(f);
     }
 
-    public <U> Box<U> flatMap(Function<T, Box<U>> f) throws Exception {
+    public <U> Box<U> flatMap(Function<T, Box<U>> f) {
         Box<U> added = f.apply(getValue());
         if(added.contextHolder != null) {
             if(this.contextHolder != null) {
