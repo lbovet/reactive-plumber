@@ -7,7 +7,7 @@ import java.util.function.Function
 
 abstract class Tools extends Plumbing {
 
-    static input = range(1, 15).map((Function)Box.&wrap)
+    static input = range(1, 15).map(Box.&wrap)
 
     static enum FizzBuzz { NONE, FIZZ, BUZZ, FIZZBUZZ }
 

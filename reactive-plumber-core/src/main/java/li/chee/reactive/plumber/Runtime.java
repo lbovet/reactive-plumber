@@ -137,6 +137,9 @@ public class Runtime {
             @Override
             public void call(SourceUnit sourceUnit, GeneratorContext generatorContext, ClassNode classNode) throws CompilationFailedException {
                 MethodNode method = classNode.getDeclaredMethod("run", new Parameter[0]);
+                if(method == null) {
+                    return;
+                }
                 BlockStatement block = (BlockStatement) method.getCode();
                 block.visit(new CodeVisitorSupport() {
 

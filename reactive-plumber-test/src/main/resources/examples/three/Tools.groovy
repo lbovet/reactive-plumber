@@ -5,7 +5,7 @@ import li.chee.reactive.plumber.Plumbing
 
 abstract class Tools extends Plumbing {
 
-    static input = range(1, 15).map Box.&wrap
+    static input = range(1, 15).map { Box.wrap it }
 
     static display = { Box box ->
         def context = box.getContext(FizzBuzz.class)
