@@ -3,8 +3,8 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>li.chee.rx.plumber</groupId>
-    <artifactId>rx-plumber</artifactId>
+    <groupId>li.chee.reactive.plumber</groupId>
+    <artifactId>reactive-plumber</artifactId>
     <version>0.2</version>
     <build>
         <plugins>
