@@ -165,13 +165,17 @@ public class Runtime {
                             previousNode = null;
                             currentSources.clear();
                         } else if (right instanceof StaticMethodCallExpression &&
-                                ((StaticMethodCallExpression) right).getMethod().equals("split")) {
-                            StringBuilder label = new StringBuilder("split");
-                            ArgumentListExpression args = ((ArgumentListExpression) (((StaticMethodCallExpression) right).getArguments()));
-                            Node node = new Node();
+                                expression.getLeftExpression() instanceof ArgumentListExpression) {
                             List<Expression> vars =
                                     ((ArgumentListExpression) expression.getLeftExpression()).getExpressions();
-                            args.getExpression(0).visit(
+                            StringBuilder label = new StringBuilder();
+                            String method = ((StaticMethodCallExpression) right).getMethod();
+                            if(!method.startsWith("from")) {
+                                label.append(method);
+                            }
+                            ArgumentListExpression args = ((ArgumentListExpression) (((StaticMethodCallExpression) right).getArguments()));
+                            Node node = new Node();
+                            args.visit(
                                     new CodeVisitorSupport() {
                                         @Override
                                         public void visitStaticMethodCallExpression(StaticMethodCallExpression call) {
@@ -180,13 +184,11 @@ public class Runtime {
                                         }
 
                                         @Override
-                                        public void visitVariableExpression(VariableExpression expression) {
-                                            Node peer = nodes.get(expression.getAccessedVariable());
-                                            graph.edge(edge(peer, node).attr(Attribute.STYLE, StyleAttr.DASHED));
+                                        public void visitConstantExpression(ConstantExpression expression) {
+                                            label.append(" ")
+                                                    .append(statics(expression.getValue().toString()));
                                         }
-                                    });
-                            args.getExpression(1).visit(
-                                    new CodeVisitorSupport() {
+
                                         @Override
                                         public void visitVariableExpression(VariableExpression expression) {
                                             Node peer = nodes.get(expression.getAccessedVariable());
@@ -203,8 +205,8 @@ public class Runtime {
                     }
 
                     private List<String> commonMethods =
-                            Arrays.asList("map", "flatMap", "doOnNext", "compose", "doOnSuccess", "to", "transform", "zipWith",
-                            "value");
+                            Arrays.asList("map", "flatMap", "flatMapIterable", "flatMapSequential", "concatMap",
+                                    "doOnNext", "compose", "doOnSuccess", "to", "transform", "zipWith", "value");
 
                     @Override
                     public void visitMethodCallExpression(MethodCallExpression call) {
@@ -300,10 +302,8 @@ public class Runtime {
 
                                                 @Override
                                                 public void visitConstantExpression(ConstantExpression expression) {
-                                                    boolean str = expression.getType().getName().equals("java.lang.String");
-                                                    label.append(" "+(str?"'":""))
-                                                            .append(statics(expression.getValue().toString()))
-                                                            .append((str?"'":""));
+                                                    label.append(" ")
+                                                            .append(statics(expression.getValue().toString()));
                                                 }
                                             });
                                             node[0] = new Node()
@@ -329,6 +329,20 @@ public class Runtime {
                                                 graph.edge(edge(node[0], previousNode));
                                             } else {
                                                 nodes.putIfAbsent(currentDeclaration.getVariableExpression(), node[0]);
+                                            }
+                                        }
+
+                                        @Override
+                                        public void visitConstantExpression(ConstantExpression expression) {
+                                            Node source = new Node()
+                                                    .attr(Attribute.LABEL, expression.getText())
+                                                    .attr(Attribute.FONTNAME, "arial");
+                                            graph.node(source);
+                                            if(previousNode != null) {
+                                                Edge edge = edge(source, previousNode);
+                                                graph.edge(edge);
+                                            } else {
+                                                nodes.putIfAbsent(currentDeclaration.getVariableExpression(), source);
                                             }
                                         }
 
@@ -447,8 +461,12 @@ public class Runtime {
             }
 
             private Edge edge(Node from, Node to) {
-                assert from != null;
-                assert to != null;
+                if(to==null) {
+                    to = new Node().id("unknown");
+                }
+                if(from==null) {
+                    from = new Node().id("unknown");
+                }
                 return new Edge(from, to);
             }
 

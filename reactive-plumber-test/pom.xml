@@ -18,10 +18,14 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <!-- just to avoid errors in IDE -->
             <groupId>li.chee.reactive.plumber</groupId>
             <artifactId>reactive-plumber-rxjava</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.javaslang</groupId>
+            <artifactId>javaslang</artifactId>
+            <version>2.0.5</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

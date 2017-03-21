@@ -40,8 +40,12 @@ public class GenericPlumbingTest {
     }
 
     @Test
-    @Ignore
     public void testRuntimeFive() throws IOException {
         new Runtime(true).run(new String(Files.readAllBytes(Paths.get(ROOT+"/five/five.groovy"))));
+    }
+
+    @Test
+    public void testRuntimeSix() throws IOException {
+        new Runtime(true).run(new String(Files.readAllBytes(Paths.get(ROOT+"/six/six.groovy"))));
     }
 }
