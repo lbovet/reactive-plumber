@@ -15,7 +15,7 @@ def stringPrint = pipe {
 
 def numberPrint = pipe {
     from data \
-    flatMapIterable select(SECOND) \
+    map select(SECOND) \
     doOnNext show("number")
 }
 

@@ -6,17 +6,17 @@ import li.chee.reactive.plumber.Plumbing
 
 abstract class Tools extends Plumbing {
 
-    static input = just("you", "world")
+    static input = just("foo", "bar")
 
     static FIRST = 0
     static SECOND = 1
 
     static select(int pos) {
-        return { Tuple tuple -> (Iterable)tuple.toSeq().get(pos)}
+        return { Tuple tuple -> tuple.toSeq().get(pos)}
     }
 
     static process = {
-        String s -> new Tuple2(Arrays.asList("hello "+s), Arrays.asList(1))
+        String s -> new Tuple2(Arrays.asList("hello "+s, "how are you "+s+"?"), 500)
     }
 }
 
