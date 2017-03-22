@@ -277,7 +277,7 @@ public class Runtime {
 
                     @Override
                     public void visitStaticMethodCallExpression(StaticMethodCallExpression call) {
-                        if (currentSubGraph != null && call.getMethodAsString().equals("from")) {
+                        if (currentSubGraph != null && call.getMethodAsString().startsWith("from")) {
                             Node[] node = new Node[1];
                             call.getArguments().visit(
                                     new CodeVisitorSupport() {
