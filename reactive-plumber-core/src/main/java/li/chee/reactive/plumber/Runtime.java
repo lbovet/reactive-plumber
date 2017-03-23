@@ -47,6 +47,8 @@ public class Runtime {
 
     private boolean generateGraph = false;
 
+    private GroovyShell shell;
+
     private GraphTheme theme = GraphTheme.DARK;
 
     private boolean hideToLinks = true;
@@ -92,12 +94,23 @@ public class Runtime {
     }
 
     public Object run(String scriptText) {
-        CompilerConfiguration config = new CompilerConfiguration();
-        if (generateGraph) {
-            config.addCompilationCustomizers(getGraphOutputCustomizer());
+        run(scriptText, null)
+    }
+
+    public Object run(String scriptText, String filename) {
+        if(shell == null) {
+            CompilerConfiguration config = new CompilerConfiguration();
+            if (generateGraph) {
+                config.addCompilationCustomizers(getGraphOutputCustomizer());
+            }
+            shell = new GroovyShell(config);
         }
-        GroovyShell shell = new GroovyShell(config);
-        Script script = shell.parse(scriptText);
+        Script script;
+        if(filename != null) {
+            shell.parse(scriptText, filename);
+        } else {
+            shell.parse(scriptText);
+        }
         return script.run();
     }
 
