@@ -1,6 +1,6 @@
 package examples.two
 
-import static Tools.*
+import static Two.*
 
 def marked = pipe {
     from input \
@@ -9,14 +9,14 @@ def marked = pipe {
 
 def even = pipe {
     from marked \
-    filter context(EVEN) \
+    filter only(EVEN) \
     count() \
     map with(EVEN)
 }
 
 def odd = pipe cache {
     from marked \
-    filter context(ODD) \
+    filter only(ODD) \
     count() \
     map with(ODD)
 }

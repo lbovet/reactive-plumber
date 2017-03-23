@@ -6,6 +6,7 @@ import io.reactivex.flowables.GroupedFlowable
 import io.reactivex.functions.Consumer
 import io.reactivex.parallel.ParallelFlowable
 import io.reactivex.schedulers.Schedulers
+import org.reactivestreams.Publisher
 
 import java.util.concurrent.CountDownLatch
 
@@ -14,13 +15,14 @@ import java.util.concurrent.CountDownLatch
  */
 abstract class Plumbing extends Flowable {
 
-    static value(Flowable f) {
+    static <T> Flowable<T> value(Flowable<T> f) {
         f.firstElement().cache().repeat()
     }
 
     static show() {
         show(null)
     }
+
     static show(x) {
         x = x == null ? "": " "+x+":"
         return { println "("+Thread.currentThread().getId()+")"+x+" "+it }
@@ -37,8 +39,12 @@ abstract class Plumbing extends Flowable {
      * @param it the source or its generating function.
      * @return te Flowable
      */
-    static Flowable from(it) {
-        Closure.isAssignableFrom(it.getClass()) ? it() :it
+    static <T> Flowable<T> from(Closure<Flowable<T>> closure) {
+        closure()
+    }
+
+    static <T> Flowable<T> from(Flowable<T> f) {
+        f
     }
 
     /**
@@ -57,10 +63,24 @@ abstract class Plumbing extends Flowable {
      * @param a closure
      * @return a Flowable
      */
-    static Flowable pipe(Closure closure) {
+    static <T> Flowable<T> pipe(Closure<? extends Object<T>> closure) {
         def result = closure()
         result = normalize result
-        result = result.publish()
+        publish(result)
+    }
+
+    private static <T> Flowable<T> normalize(f) {
+        if (ParallelFlowable.isAssignableFrom(f.getClass())) {
+            ((ParallelFlowable)f).sequential()
+        } else if (Single.isAssignableFrom(f.getClass())) {
+            ((Single) f).toFlowable()
+        } else {
+            ((Flowable<T>)f)
+        }
+    }
+
+    static private <T> Flowable<T> publish(Flowable<T> f) {
+        def result = f.publish()
         connectables.add result
         result
     }
@@ -70,7 +90,7 @@ abstract class Plumbing extends Flowable {
      * @param a Flowable
      * @return the same Flowable, untouched.
      */
-    static Flowable pipe(Flowable f) {
+    static <T> Flowable<T> pipe(Flowable<T> f) {
         f
     }
 
@@ -161,16 +181,6 @@ abstract class Plumbing extends Flowable {
                 box = new Box(it)
             }
             return box.with(((GroupedFlowable)flowable).getKey())
-        }
-    }
-
-    private static normalize(f) {
-        if (ParallelFlowable.isAssignableFrom(f.getClass())) {
-            f.sequential()
-        } else if (Single.isAssignableFrom(f.getClass())) {
-            f.toFlowable()
-        } else {
-            f
         }
     }
 }

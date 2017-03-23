@@ -1,6 +1,6 @@
 package examples.five
 
-import static Tools.*
+import static Five.*
 
 def data = pipe {
     from input
@@ -10,13 +10,16 @@ def (strings, numbers) = split(types, data)
 
 def stringPrint = pipe {
     from strings \
-    reduce("strings:", line) \
+    cast String.class \
+    reduce("messages:", line) \
     doOnSuccess show()
 }
 
 def numberPrint = pipe {
     from numbers \
-    reduce("numbers:", line) \
+    cast Integer.class \
+    map Integer.&toString \
+    reduce("length:", line) \
     doOnSuccess show()
 }
 

@@ -1,6 +1,6 @@
 package examples.one
 
-import static Tools.*
+import static One.*
 
 def data = pipe {
     concurrent from(input) \
@@ -8,7 +8,8 @@ def data = pipe {
 }
 
 def printer = {
-    from(it) doOnNext show()
+    from it \
+    doOnNext show()
 }
 
 def renderer = pipe {
@@ -17,7 +18,8 @@ def renderer = pipe {
 }
 
 def count = pipe {
-    from(data) count()
+    from(data) \
+    count()
 }
 
 def size = pipe {

@@ -1,12 +1,5 @@
 package li.chee.reactive.plumber;
 
-import io.reactivex.Flowable;
-import org.junit.Test;
-
-import static li.chee.reactive.plumber.Box.binder;
-import static li.chee.reactive.plumber.Box.mapper;
-import static li.chee.reactive.plumber.Box.wrap;
-
 /**
  * Created by shaman on 20/03/17.
  */

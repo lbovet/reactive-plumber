@@ -35,6 +35,7 @@ public class GenericPlumbingTest {
     }
 
     @Test
+    @Ignore
     public void testRuntimeFour() throws IOException {
         new Runtime(true).run(new String(Files.readAllBytes(Paths.get(ROOT+"/four/four.groovy"))));
     }

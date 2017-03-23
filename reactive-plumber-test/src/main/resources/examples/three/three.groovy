@@ -1,6 +1,6 @@
 package examples.three
 
-import static Tools.*
+import static Three.*
 
 def numbers = pipe {
     from input \

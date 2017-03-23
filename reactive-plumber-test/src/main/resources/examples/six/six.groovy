@@ -1,6 +1,6 @@
 package examples.six
 
-import static Tools.*
+import static Six.*
 
 def data = pipe {
     from input \
@@ -9,14 +9,14 @@ def data = pipe {
 
 def stringPrint = pipe {
     from data \
-    flatMapIterable select(FIRST) \
-    doOnNext show("string")
+    flatMapIterable messages \
+    doOnNext show("message")
 }
 
 def numberPrint = pipe {
     from data \
-    map select(SECOND) \
-    doOnNext show("number")
+    map length \
+    doOnNext show("length")
 }
 
 drain stringPrint, numberPrint

@@ -49,7 +49,7 @@ public class GraphTest {
 
     @Test
     public void generateAllImages() throws IOException {
-        Stream.of("one", "two", "three", "four"/*, "five"*/).forEach(script -> {
+        Stream.of("one", "two", "three", /* "four",*/ "five").forEach(script -> {
                     try {
                         new Runtime().withGraphTheme(Runtime.GraphTheme.LIGHT).generateGraph(new String(Files.readAllBytes(Paths.get(ROOT+"/" + script + "/" + script + ".groovy"))), new File("target/"+script+".png"));
                     } catch (IOException e) {
