@@ -1,16 +1,18 @@
 package li.chee.reactive.plumber;
 
-import org.junit.Ignore;
+import examples.four.first.First;
+import examples.four.second.Second;
 import org.junit.Test;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.List;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertArrayEquals;
+import static reactor.core.publisher.Flux.just;
 
 /**
  * Tests the plumbing tools using groovy scripts.
@@ -35,9 +37,27 @@ public class GenericPlumbingTest {
     }
 
     @Test
-    @Ignore
-    public void testRuntimeFour() throws IOException {
-        new Runtime(true).run(new String(Files.readAllBytes(Paths.get(ROOT+"/four/four.groovy"))));
+    public void testRuntimeFour() throws IOException, URISyntaxException {
+        Runtime r = new Runtime();
+        r.run(First.class.getResource("first.groovy").toURI());
+        r.run(Second.class.getResource("second.groovy").toURI());
+    }
+
+    @Test
+    public void testRuntimeFourFirst() throws IOException, URISyntaxException {
+        Runtime r = new Runtime();
+        r.run(First.class.getResource("first.groovy").toURI());
+        List<Integer> numbers = new ArrayList<>();
+        First.drain(First.exports.even.doOnNext(numbers::add));
+        assertArrayEquals(new Integer[]{ 2, 4}, numbers.toArray());
+    }
+
+    @Test
+    public void testRuntimeFourSecond() throws IOException, URISyntaxException {
+        Runtime r = new Runtime();
+        First.exports.even = just(2,4,6);
+        First.exports.odd = just(1,3,5);
+        r.run(Second.class.getResource("second.groovy").toURI());
     }
 
     @Test

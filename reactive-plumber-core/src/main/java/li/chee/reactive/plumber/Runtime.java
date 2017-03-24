@@ -17,6 +17,8 @@ import org.kohsuke.graphviz.Shape;
 
 import java.awt.Color;
 import java.io.*;
+import java.net.URI;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -93,11 +95,28 @@ public class Runtime {
         shell.parse(scriptText);
     }
 
-    public Object run(String scriptText) {
-        run(scriptText, null)
+    public void run(URI... sources) {
+        init();
+        try {
+            for(URI source : sources) {
+                shell.evaluate(source);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public Object run(String scriptText, String filename) {
+    public void run(String scriptText) {
+        init();
+        shell.evaluate(scriptText);
+    }
+
+    public void run(String scriptText, String filename) {
+        init();
+        shell.evaluate(scriptText, filename);
+    }
+
+    private void init() {
         if(shell == null) {
             CompilerConfiguration config = new CompilerConfiguration();
             if (generateGraph) {
@@ -105,13 +124,6 @@ public class Runtime {
             }
             shell = new GroovyShell(config);
         }
-        Script script;
-        if(filename != null) {
-            shell.parse(scriptText, filename);
-        } else {
-            shell.parse(scriptText);
-        }
-        return script.run();
     }
 
     public CompilationCustomizer getGraphOutputCustomizer() {

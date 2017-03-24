@@ -49,13 +49,19 @@ public class GraphTest {
 
     @Test
     public void generateAllImages() throws IOException {
-        Stream.of("one", "two", "three", /* "four",*/ "five").forEach(script -> {
+        Stream.of("one", "two", "three", "five").forEach(script -> {
                     try {
-                        new Runtime().withGraphTheme(Runtime.GraphTheme.LIGHT).generateGraph(new String(Files.readAllBytes(Paths.get(ROOT+"/" + script + "/" + script + ".groovy"))), new File("target/"+script+".png"));
+                        new Runtime().withGraphTheme(Runtime.GraphTheme.LIGHT).generateGraph(new String(Files.readAllBytes(Paths.get(ROOT + "/" + script + "/" + script + ".groovy"))), new File("target/" + script + ".png"));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
         );
+    }
+
+    @Test
+    public void generateExampleFourImages() throws IOException {
+        new Runtime().withGraphTheme(Runtime.GraphTheme.LIGHT).generateGraph(new String(Files.readAllBytes(Paths.get(ROOT+"/four/first/first.groovy"))), new File("target/four-first.png"));
+        new Runtime().withGraphTheme(Runtime.GraphTheme.LIGHT).generateGraph(new String(Files.readAllBytes(Paths.get(ROOT+"/four/second/second.groovy"))), new File("target/four-second.png"));
     }
 }
