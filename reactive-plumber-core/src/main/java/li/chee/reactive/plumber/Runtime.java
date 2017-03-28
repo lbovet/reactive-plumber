@@ -95,6 +95,19 @@ public class Runtime {
         shell.parse(scriptText);
     }
 
+    public void generateGraphs(URI... sources) {
+        CompilerConfiguration config = new CompilerConfiguration();
+        config.addCompilationCustomizers(getGraphOutputCustomizer());
+        GroovyShell shell = new GroovyShell(config);
+        try {
+            for(URI source : sources) {
+                shell.parse(source);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void run(URI... sources) {
         init();
         try {
@@ -134,8 +147,8 @@ public class Runtime {
         return new CompilationCustomizer(CompilePhase.SEMANTIC_ANALYSIS) {
             DeclarationExpression currentDeclaration;
             Node previousNode;
-            Map<Object, Node> nodes = new HashMap<>();
-            Map<Object, String> edgeLabels = new HashMap<>();
+            Map<Object, Node> nodes;
+            Map<Object, String> edgeLabels;
             Style edgeStyle = new Style()
                     .attr(Attribute.COLOR, theme.arrow)
                     .attr(Attribute.FONTNAME, "arial")
@@ -151,23 +164,30 @@ public class Runtime {
                     .attr(Attribute.HEIGHT, 0.2F)
                     .attr(Attribute.MARGIN, 0.11F)
                     .attr("style", "rounded,filled");
-            Graph graph = new Graph()
-                    .style(new Style()
-                            .attr(Attribute.BGCOLOR, theme.background))
-                    .nodeWith(nodeStyle)
-                    .edgeWith(edgeStyle);
+            Graph graph;
             Graph currentSubGraph;
-            List<Node> currentSources = new ArrayList<>();
+            List<Node> currentSources;
 
             @Override
             public void call(SourceUnit sourceUnit, GeneratorContext generatorContext, ClassNode classNode) throws CompilationFailedException {
+                String name = new ArrayDeque<>(Arrays.asList(sourceUnit.getName().split("/"))).removeLast().split("\\.")[0];
                 MethodNode method = classNode.getDeclaredMethod("run", new Parameter[0]);
+                currentDeclaration =null;
+                previousNode = null;
+                nodes = new HashMap<>();
+                edgeLabels = new HashMap<>();
+                currentSubGraph = null;
+                currentSources = new ArrayList<>();
+                graph = new Graph()
+                        .style(new Style()
+                                .attr(Attribute.BGCOLOR, theme.background))
+                        .nodeWith(nodeStyle)
+                        .edgeWith(edgeStyle);
                 if(method == null) {
                     return;
                 }
                 BlockStatement block = (BlockStatement) method.getCode();
                 block.visit(new CodeVisitorSupport() {
-
                     @Override
                     public void visitDeclarationExpression(DeclarationExpression expression) {
                         Expression right = expression.getRightExpression();
@@ -358,11 +378,35 @@ public class Runtime {
                                         }
 
                                         @Override
+                                        public void visitPropertyExpression(PropertyExpression expression) {
+                                            if(expression.getObjectExpression() instanceof PropertyExpression) {
+                                                PropertyExpression exp = (PropertyExpression)expression.getObjectExpression();
+                                                Expression obj = exp.getObjectExpression();
+                                                if(obj instanceof ClassExpression) {
+                                                    Expression prop = exp.getProperty();
+                                                    Graph sourceGraph = subGraph(prop.getText(), prop.getText());
+                                                    sourceGraph.attr(Attribute.STYLE, StyleAttr.DASHED);
+                                                    graph.subGraph(sourceGraph);
+                                                    Node source = new Node()
+                                                            .attr(Attribute.LABEL, expression.getProperty().getText());
+                                                    sourceGraph.node(source);
+                                                    linkToPrevious(source);
+                                                }
+                                            } else {
+                                                expression.getObjectExpression().visit(this);
+                                                expression.getProperty().visit(this);
+                                            }
+                                        }
+
+                                        @Override
                                         public void visitConstantExpression(ConstantExpression expression) {
                                             Node source = new Node()
-                                                    .attr(Attribute.LABEL, expression.getText())
-                                                    .attr(Attribute.FONTNAME, "arial");
+                                                    .attr(Attribute.LABEL, expression.getText());
                                             graph.node(source);
+                                            linkToPrevious(source);
+                                        }
+
+                                        private void linkToPrevious(Node source) {
                                             if(previousNode != null) {
                                                 Edge edge = edge(source, previousNode);
                                                 graph.edge(edge);
@@ -434,6 +478,27 @@ public class Runtime {
                         call.getArguments().visit(this);
                     }
 
+
+                    @Override
+                    public void visitBinaryExpression(BinaryExpression expression) {
+                        if(expression.getOperation().getText().equals("=")) {
+                            expression.getRightExpression().visit(new CodeVisitorSupport() {
+                                @Override
+                                public void visitVariableExpression(VariableExpression expression) {
+                                    Node target = new Node()
+                                            .attr(Attribute.SHAPE, Shape.CIRCLE)
+                                            .attr(Attribute.STYLE, StyleAttr.SOLID)
+                                            .attr(Attribute.WIDTH, 0.2F)
+                                            .attr(Attribute.FIXEDSIZE, true)
+                                            .attr(Attribute.LABEL, "");
+                                    graph.node(target);
+                                    graph.edge(edge(nodes.get(expression.getAccessedVariable()), target));
+                                }
+                            });
+                        }
+
+                    }
+
                     private String objId(Object obj) {
                         return "obj" + obj.toString().split("@")[1].split("\\[")[0];
                     }
@@ -454,9 +519,9 @@ public class Runtime {
                 g = g.scale(1f);
 
                 if (type == null) {
-                    g.renderToFile(new File("target/graph.png"));
+                    g.renderToFile(new File("target/"+name+".png"));
                     try {
-                        Files.write(Paths.get("target/graph.svg"), g.createSvg().getBytes(Charset.forName("UTF8")));
+                        Files.write(Paths.get("target/"+name+".svg"), g.createSvg().getBytes(Charset.forName("UTF8")));
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }

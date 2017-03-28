@@ -38,14 +38,14 @@ public class GenericPlumbingTest {
 
     @Test
     public void testRuntimeFour() throws IOException, URISyntaxException {
-        Runtime r = new Runtime();
+        Runtime r = new Runtime(true);
         r.run(First.class.getResource("first.groovy").toURI());
         r.run(Second.class.getResource("second.groovy").toURI());
     }
 
     @Test
     public void testRuntimeFourFirst() throws IOException, URISyntaxException {
-        Runtime r = new Runtime();
+        Runtime r = new Runtime(true);
         r.run(First.class.getResource("first.groovy").toURI());
         List<Integer> numbers = new ArrayList<>();
         First.drain(First.exports.even.doOnNext(numbers::add));
@@ -54,7 +54,7 @@ public class GenericPlumbingTest {
 
     @Test
     public void testRuntimeFourSecond() throws IOException, URISyntaxException {
-        Runtime r = new Runtime();
+        Runtime r = new Runtime(true);
         First.exports.even = just(2,4,6);
         First.exports.odd = just(1,3,5);
         r.run(Second.class.getResource("second.groovy").toURI());
