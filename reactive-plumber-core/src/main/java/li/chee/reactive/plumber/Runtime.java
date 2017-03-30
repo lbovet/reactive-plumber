@@ -192,7 +192,8 @@ public class Runtime {
                     public void visitDeclarationExpression(DeclarationExpression expression) {
                         Expression right = expression.getRightExpression();
                         if (right instanceof StaticMethodCallExpression &&
-                                ((StaticMethodCallExpression) right).getMethod().equals("pipe") ||
+                                (((StaticMethodCallExpression) right).getMethod().equals("pipe") ||
+                                ((StaticMethodCallExpression) right).getMethod().equals("tube")) ||
                                 right instanceof ClosureExpression) {
                             Variable var = expression.getVariableExpression().getAccessedVariable();
                             String id = objId(var);
@@ -205,6 +206,9 @@ public class Runtime {
                             if (currentSources.size() > 0) {
                                 currentSubGraph.attr(Attribute.LABEL, currentSubGraph.attr(Attribute.LABEL) + " *");
                                 currentSubGraph.attr(Attribute.STYLE, StyleAttr.BOLD);
+                            }
+                            if(right instanceof StaticMethodCallExpression && ((StaticMethodCallExpression) right).getMethod().equals("tube")) {
+                                currentSubGraph.attr(Attribute.STYLE, StyleAttr.ROUNDED);
                             }
                             currentSubGraph = null;
                             previousNode = null;

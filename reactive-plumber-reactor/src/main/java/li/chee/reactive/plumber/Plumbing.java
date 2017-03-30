@@ -47,6 +47,10 @@ public abstract class Plumbing extends Flux {
         return result;
     }
 
+    public static <T> Flux<T> tube(Closure<? extends Publisher<T>> closure) {
+        return normalize(closure.call());
+    }
+
     public static <T, U extends Flux<T>> U pipe(U f) {
         return f;
     }
