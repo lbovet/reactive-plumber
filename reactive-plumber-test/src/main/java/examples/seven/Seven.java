@@ -5,5 +5,5 @@ import reactor.core.publisher.Flux;
 
 public abstract class Seven extends Plumbing {
 
-    static Flux<Integer> input = range(1, 3);
+    static Flux<Integer> input = range(1, 300);
 }

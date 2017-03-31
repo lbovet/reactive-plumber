@@ -1,10 +1,17 @@
 package examples.seven
 
-import static Seven.*
+import static examples.seven.Seven.input
+import static li.chee.reactive.plumber.Plumbing.*
+import static reactor.core.publisher.Flux.concat
+
+
+def source = tube {
+    from input \
+    doOnNext show("input") \
+}
 
 def data = pipe {
-    from input \
-    doOnNext show("input")
+    from source
 }
 
 def multiple = tube {
@@ -17,13 +24,13 @@ def left = pipe {
     doOnNext show("left")
 }
 
-def right = pipe {
+def right = pipe cache(1000) {
     from multiple \
     doOnNext show("right")
 }
 
 def all = pipe {
-    from merge(left, right) \
+    from concat(left, right) \
     doOnNext show("merged")
 }
 

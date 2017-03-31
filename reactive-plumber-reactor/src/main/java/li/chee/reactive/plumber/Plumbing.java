@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 public abstract class Plumbing extends Flux {
 
@@ -55,15 +57,15 @@ public abstract class Plumbing extends Flux {
         return f;
     }
 
-    public static <T> Flux<T> cache(Closure<? extends Publisher<T>> closure) {
+    public static <T> Flux<T> cache(int size, Closure<? extends Publisher<T>> closure) {
         Publisher<T> f = closure.call();
         if (f instanceof Mono) {
             Mono<T> m = ((Mono<T>) f).cache();
             m.subscribe();
             return m.flux();
         } else {
-            Flux<T> n = normalize(closure.call()).cache();
-            n.subscribe();
+            ConnectableFlux<T> n = normalize(closure.call()).replay(size);
+            connectables.add(n);
             return n;
         }
     }
@@ -92,7 +94,6 @@ public abstract class Plumbing extends Flux {
     public static void drain(Flux<?>... pipes) {
         CountDownLatch latch = new CountDownLatch(1);
         fromArray(pipes)
-                .doOnNext( p -> { if(p instanceof ConnectableFlux) connectables.add((ConnectableFlux)p); })
                 .flatMap( p -> p.last().flux())
                 .doOnComplete(latch::countDown)
                 .subscribe();
