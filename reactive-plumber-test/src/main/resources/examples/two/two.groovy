@@ -14,7 +14,7 @@ def even = pipe {
     map with(EVEN)
 }
 
-def odd = pipe {
+def odd = pipe cache(1000) {
     from marked \
     filter only(ODD) \
     count() \

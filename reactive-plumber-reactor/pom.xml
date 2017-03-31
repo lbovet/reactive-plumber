@@ -10,18 +10,6 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>reactive-plumber-reactor</artifactId>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>io.projectreactor</groupId>
-                <artifactId>reactor-bom</artifactId>
-                <version>Aluminium-RELEASE</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>li.chee.reactive.plumber</groupId>
@@ -31,6 +19,7 @@
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-core</artifactId>
+            <version>3.0.5.RELEASE</version>
         </dependency>
     </dependencies>
 
@@ -42,5 +31,11 @@
             </plugin>
         </plugins>
     </build>
-
+    <repositories>
+        <repository>
+            <id>spring-snapshots</id>
+            <snapshots><enabled>true</enabled></snapshots>
+            <url>http://repo.spring.io/snapshot/</url>
+        </repository>
+    </repositories>
 </project>
