@@ -49,6 +49,10 @@ public class Runtime {
 
     private boolean generateGraph = false;
 
+    private Graph overview = null;
+    private Graph currentScriptGraph = null;
+    private Map<String, Node> exports = new HashMap<>();
+
     private GroovyShell shell;
 
     private GraphTheme theme = GraphTheme.DARK;
@@ -80,22 +84,24 @@ public class Runtime {
         this.generateGraph = generateGraph;
     }
 
-    public void generateGraph(String scriptText, File file) {
+    public Runtime generateGraph(String scriptText, File file) {
         try {
             generateGraph(scriptText, Arrays.stream(file.getName().split("\\.")).reduce((a, b) -> b).get(), new FileOutputStream(file));
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
+        return this;
     }
 
-    public void generateGraph(String scriptText, String type, OutputStream output) {
+    public Runtime generateGraph(String scriptText, String type, OutputStream output) {
         CompilerConfiguration config = new CompilerConfiguration();
         config.addCompilationCustomizers(getGraphOutputCustomizer(type, output));
         GroovyShell shell = new GroovyShell(config);
         shell.parse(scriptText);
+        return this;
     }
 
-    public void generateGraphs(URI... sources) {
+    public Runtime generateGraphs(URI... sources) {
         CompilerConfiguration config = new CompilerConfiguration();
         config.addCompilationCustomizers(getGraphOutputCustomizer());
         GroovyShell shell = new GroovyShell(config);
@@ -106,9 +112,21 @@ public class Runtime {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return this;
     }
 
-    public void run(URI... sources) {
+    public Runtime generateOverviewGraph() {
+        return generateOverviewGraph(null, null);
+    }
+
+    public Runtime generateOverviewGraph(String type, OutputStream output) {
+        if(overview != null) {
+            createGraph(overview, "overview", type, output);
+        }
+        return this;
+    }
+
+    public Runtime run(URI... sources) {
         init();
         try {
             for(URI source : sources) {
@@ -117,16 +135,19 @@ public class Runtime {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return this;
     }
 
-    public void run(String scriptText) {
+    public Runtime run(String scriptText) {
         init();
         shell.evaluate(scriptText);
+        return this;
     }
 
-    public void run(String scriptText, String filename) {
+    public Runtime run(String scriptText, String filename) {
         init();
         shell.evaluate(scriptText, filename);
+        return this;
     }
 
     private void init() {
@@ -170,8 +191,11 @@ public class Runtime {
 
             @Override
             public void call(SourceUnit sourceUnit, GeneratorContext generatorContext, ClassNode classNode) throws CompilationFailedException {
-                String name = new ArrayDeque<>(Arrays.asList(sourceUnit.getName().split("/"))).removeLast().split("\\.")[0];
+                final String scriptName = new ArrayDeque<>(Arrays.asList(sourceUnit.getName().split("/"))).removeLast().split("\\.")[0];
                 MethodNode method = classNode.getDeclaredMethod("run", new Parameter[0]);
+                if(method == null) {
+                    return;
+                }
                 currentDeclaration =null;
                 previousNode = null;
                 nodes = new HashMap<>();
@@ -179,13 +203,17 @@ public class Runtime {
                 currentSubGraph = null;
                 currentSources = new ArrayList<>();
                 graph = new Graph()
-                        .style(new Style()
-                                .attr(Attribute.BGCOLOR, theme.background))
+                        .style(new Style().attr(Attribute.BGCOLOR, theme.background))
                         .nodeWith(nodeStyle)
                         .edgeWith(edgeStyle);
-                if(method == null) {
-                    return;
+                if(overview == null) {
+                    overview = new Graph()
+                            .style(new Style().attr(Attribute.BGCOLOR, theme.background))
+                            .nodeWith(nodeStyle)
+                            .edgeWith(edgeStyle);
                 }
+                currentScriptGraph = subGraph(scriptName, scriptName);
+                overview.subGraph(currentScriptGraph);
                 BlockStatement block = (BlockStatement) method.getCode();
                 block.visit(new CodeVisitorSupport() {
                     @Override
@@ -384,6 +412,7 @@ public class Runtime {
                                         @Override
                                         public void visitPropertyExpression(PropertyExpression expression) {
                                             if(expression.getObjectExpression() instanceof PropertyExpression) {
+                                                String name = expression.getProperty().getText();
                                                 PropertyExpression exp = (PropertyExpression)expression.getObjectExpression();
                                                 Expression obj = exp.getObjectExpression();
                                                 if(obj instanceof ClassExpression) {
@@ -391,8 +420,9 @@ public class Runtime {
                                                     Graph sourceGraph = subGraph(prop.getText(), prop.getText());
                                                     sourceGraph.attr(Attribute.STYLE, StyleAttr.DASHED);
                                                     graph.subGraph(sourceGraph);
-                                                    Node source = new Node()
-                                                            .attr(Attribute.LABEL, expression.getProperty().getText());
+                                                    String id = (obj.getText()+"."+name).replace(".", "_");
+                                                    Node source = new Node().id(id)
+                                                            .attr(Attribute.LABEL, name);
                                                     sourceGraph.node(source);
                                                     linkToPrevious(source);
                                                 }
@@ -497,6 +527,8 @@ public class Runtime {
                                             .attr(Attribute.LABEL, "");
                                     graph.node(target);
                                     graph.edge(edge(nodes.get(expression.getAccessedVariable()), target));
+                                    String name = expression.getText();
+                                    currentScriptGraph.node(new Node().id(scriptName+"_"+name)).attr(Attribute.LABEL, name);
                                 }
                             });
                         }
@@ -504,50 +536,22 @@ public class Runtime {
                     }
 
                     private String objId(Object obj) {
-                        return "obj" + obj.toString().split("@")[1].split("\\[")[0];
+                        String s = "obj" + obj.toString().split("@")[1].split("\\[")[0];
+                        return s;
                     }
 
-                    private Graph subGraph(String id, String name) {
-                        Graph subGraph = new Graph().id("cluster_" + id).nodeWith(nodeStyle).edgeWith(edgeStyle);
-                        subGraph.attr(Attribute.LABEL, name);
-                        subGraph.attr(Attribute.FONTNAME, "arial");
-                        subGraph.attr(Attribute.FONTSIZE, 8f);
-                        subGraph.attr(Attribute.COLOR, theme.box);
-                        subGraph.attr(Attribute.FONTCOLOR, theme.box);
-                        return subGraph;
-                    }
                 });
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                graph.writeTo(out);
-                Graphviz g = Graphviz.fromString(out.toString().replaceAll("\\r", ""));
-                g = g.scale(1f);
+                createGraph(graph, scriptName, type, output);
+            }
 
-                if (type == null) {
-                    g.renderToFile(new File("target/"+name+".png"));
-                    try {
-                        Files.write(Paths.get("target/"+name+".svg"), g.createSvg().getBytes(Charset.forName("UTF8")));
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                } else {
-                    if ("svg".equals(type)) {
-                        try {
-                            output.write(g.createSvg().getBytes(Charset.forName("UTF8")));
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    } else {
-                        try {
-                            File f = File.createTempFile("tmp", "." + type);
-                            g.renderToFile(f);
-                            Files.copy(f.toPath(), output);
-                            f.delete();
-                            f.deleteOnExit();
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                }
+            private Graph subGraph(String id, String name) {
+                Graph subGraph = new Graph().id("cluster_" + id).nodeWith(nodeStyle).edgeWith(edgeStyle);
+                subGraph.attr(Attribute.LABEL, name);
+                subGraph.attr(Attribute.FONTNAME, "arial");
+                subGraph.attr(Attribute.FONTSIZE, 8f);
+                subGraph.attr(Attribute.COLOR, theme.box);
+                subGraph.attr(Attribute.FONTCOLOR, theme.box);
+                return subGraph;
             }
 
             private String html(String s) {
@@ -584,5 +588,39 @@ public class Runtime {
                 return s;
             }
         };
+    }
+
+    private void createGraph(Graph graph, String name, String type, OutputStream output) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        graph.writeTo(out);
+        Graphviz g = Graphviz.fromString(out.toString().replaceAll("\\r", ""));
+        g = g.scale(1f);
+
+        if (type == null) {
+            g.renderToFile(new File("target/"+name+".png"));
+            try {
+                Files.write(Paths.get("target/"+name+".svg"), g.createSvg().getBytes(Charset.forName("UTF8")));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            if ("svg".equals(type)) {
+                try {
+                    output.write(g.createSvg().getBytes(Charset.forName("UTF8")));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                try {
+                    File f = File.createTempFile("tmp", "." + type);
+                    g.renderToFile(f);
+                    Files.copy(f.toPath(), output);
+                    f.delete();
+                    f.deleteOnExit();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
     }
 }
