@@ -85,16 +85,16 @@ public class GenericPlumbingTest {
     @Test
     public void testSharedFlatMapIterable() {
         just(range(0, 300).toIterable(), range(0, 300).toIterable())
-                .flatMapIterable(x->x)
+                .flatMap(Flux::fromIterable)
+                .share()
+                .share()
+                .count()
                 .log()
-                .hide()
                 .subscribe();
     }
 
     @Test
-    public void test() {
-        ConnectableFlux<Integer> a = Flux.range(0,300).cache().publish();
-        a.log().subscribe();
-        a.connect();
+    public void testPublishedCacheWithoutParameter() {
+        Flux.range(0,300).cache().share().last().log().subscribe();
     }
 }
