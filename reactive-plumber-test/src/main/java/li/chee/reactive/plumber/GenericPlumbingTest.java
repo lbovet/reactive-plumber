@@ -85,7 +85,7 @@ public class GenericPlumbingTest {
     @Test
     public void testSharedFlatMapIterable() {
         just(range(0, 300).toIterable(), range(0, 300).toIterable())
-                .flatMap(Flux::fromIterable)
+                .flatMapIterable(x->x)
                 .share()
                 .share()
                 .count()
