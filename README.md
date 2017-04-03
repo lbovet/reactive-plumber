@@ -4,7 +4,7 @@
 
 <p align='center'><img src='https://cloud.githubusercontent.com/assets/692124/24085590/15efacf4-0cff-11e7-8b31-451e4d64902a.png' /></p>
 
-You want to use [RxJava](https://github.com/ReactiveX/RxJava) or [Reactor](https://projectreactor.io/) within a modular, readable and safe abstraction.
+You want to use [Reactor](https://projectreactor.io/) (or [RxJava](https://github.com/ReactiveX/RxJava)) within a modular, readable and safe abstraction.
 
 Reactive-Plumber let you write your reactive stream plumbing in a Groovy DSL and also visualize it graphically.
 
@@ -69,7 +69,7 @@ def items = pipe {
 }
 ```
 
-This defines a _pipe_, which is actually a _Flowable_ or _Flux_. In the closure block, we simply chain existing stream methods. Here we count the bits in each numbers and convert them into strings.
+This defines a _pipe_, which is actually a Reactor _Flux_ (or RxJava _Flowable_). In the closure block, we simply chain existing stream methods. Here we count the bits in each numbers and convert them into strings.
 
 ### From
 
@@ -84,7 +84,7 @@ def printer = pipe {
 
 ### Drain
 
-It is not sufficient to connect pipes together in order to define your plumbing. You also need to declare on which pipes you will _suck_ the data.
+It is not sufficient to connect pipes together in order to define your plumbing. You also need to declare on which pipes are terminal to ensure that all events are processed.
 
 ```groovy
 drain printer
@@ -148,13 +148,15 @@ This library provides a monadic wrapper type _Box_ that allows to transport cont
 
 ## Examples
 
+Each example has a pipeline Groovy script and an adapter Java class that exposes the business logic methods in a simple static functional form.
+
 ### One
 
 <img align="right" src="https://cloud.githubusercontent.com/assets/692124/23836790/27652d5a-077e-11e7-80eb-bbeed7c43a28.png">
 
 [one.groovy](https://github.com/lbovet/reactive-plumber/tree/master/reactive-plumber-test/src/main/resources/examples/one/one.groovy)
 
-[Tools.groovy](https://github.com/lbovet/reactive-plumber/tree/master/reactive-plumber-test/src/main/resources/examples/one/Tools.groovy)
+[One.java](https://github.com/lbovet/reactive-plumber/blob/master/reactive-plumber-test/src/main/java/examples/one/One.java)
 
 output:
 ```
@@ -189,7 +191,7 @@ output:
 
 [two.groovy](https://github.com/lbovet/reactive-plumber/tree/master/reactive-plumber-test/src/main/resources/examples/two/two.groovy)
 
-[Tools.groovy](https://github.com/lbovet/reactive-plumber/tree/master/reactive-plumber-test/src/main/resources/examples/two/Tools.groovy)
+[Two.java](https://github.com/lbovet/reactive-plumber/blob/master/reactive-plumber-test/src/main/java/examples/two/Two.java)
 
 output:
 ```
@@ -217,7 +219,7 @@ output:
 
 [three.groovy](https://github.com/lbovet/reactive-plumber/tree/master/reactive-plumber-test/src/main/resources/examples/three/three.groovy)
 
-[Tools.groovy](https://github.com/lbovet/reactive-plumber/tree/master/reactive-plumber-test/src/main/resources/examples/three/Tools.groovy)
+[Three.java](https://github.com/lbovet/reactive-plumber/blob/master/reactive-plumber-test/src/main/java/examples/three/Three.java)
 
 output:
 ```
@@ -245,39 +247,13 @@ FIZZBUZZ: 1
 .
 ```
 
-### Four
-
-<img align="right" src="https://cloud.githubusercontent.com/assets/692124/23836788/27643a8a-077e-11e7-8cd7-8c2b5f3904d4.png">
-
-[four.groovy](https://github.com/lbovet/reactive-plumber/tree/master/reactive-plumber-test/src/main/resources/examples/four/four.groovy)
-
-[Tools.groovy](https://github.com/lbovet/reactive-plumber/tree/master/reactive-plumber-test/src/main/resources/examples/four/Tools.groovy)
-
-output:
-```
-FIZZ: 4
-BUZZ: 2
-FIZZBUZZ: 1
-
-
-
-
-
-
-
-
-
-
-.
-```
-
 ### Five
 
 <img align="right" src="https://cloud.githubusercontent.com/assets/692124/23836786/2760f15e-077e-11e7-99ca-4bcbb3944878.png">
 
 [five.groovy](https://github.com/lbovet/reactive-plumber/tree/master/reactive-plumber-test/src/main/resources/examples/five/five.groovy)
 
-[Tools.groovy](https://github.com/lbovet/reactive-plumber/tree/master/reactive-plumber-test/src/main/resources/examples/five/Tools.groovy)
+[Five.java](https://github.com/lbovet/reactive-plumber/blob/master/reactive-plumber-test/src/main/java/examples/five/Five.java)
 
 output:
 ```
@@ -294,7 +270,7 @@ numbers, [5|], [3|]
 
 ## Graph Visualization
 
-Rx-Plumber can create graph images of your plumbing like the ones above by analyzing the Groovy AST of the script.
+Reactive-Plumber can create graph images of your plumbing like the ones above by analyzing the Groovy AST of the script.
 
 ```java
 Runtime runtime = new Runtime().withGraphTheme(Runtime.GraphTheme.LIGHT); // White background
