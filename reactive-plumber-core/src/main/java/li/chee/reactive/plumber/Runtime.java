@@ -1,7 +1,6 @@
 package li.chee.reactive.plumber;
 
 import groovy.lang.GroovyShell;
-import groovy.lang.Script;
 import guru.nidi.graphviz.engine.Graphviz;
 import org.codehaus.groovy.ast.*;
 import org.codehaus.groovy.ast.expr.*;
@@ -18,7 +17,6 @@ import org.kohsuke.graphviz.Shape;
 import java.awt.Color;
 import java.io.*;
 import java.net.URI;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -209,6 +207,7 @@ public class Runtime {
                 if(overview == null) {
                     overview = new Graph()
                             .style(new Style().attr(Attribute.BGCOLOR, theme.background))
+                            .attr(Attribute.STYLE, StyleAttr.DASHED)
                             .nodeWith(nodeStyle)
                             .edgeWith(edgeStyle);
                 }
@@ -420,11 +419,18 @@ public class Runtime {
                                                     Graph sourceGraph = subGraph(prop.getText(), prop.getText());
                                                     sourceGraph.attr(Attribute.STYLE, StyleAttr.DASHED);
                                                     graph.subGraph(sourceGraph);
-                                                    String id = (obj.getText()+"."+name).replace(".", "_");
+                                                    String id = (exp.getText()+"."+name).replace(".", "_");
                                                     Node source = new Node().id(id)
                                                             .attr(Attribute.LABEL, name);
                                                     sourceGraph.node(source);
                                                     linkToPrevious(source);
+                                                    if(exp.getProperty() instanceof ConstantExpression) {
+                                                        String src = exp.getProperty().getText() + "_" + name;
+                                                        Node target = new Node().attr(Attribute.LABEL, "");
+                                                        Node srcNode = exports.get(src);
+                                                        currentScriptGraph.node(target);
+                                                        overview.edge(srcNode, target);
+                                                    }
                                                 }
                                             } else {
                                                 expression.getObjectExpression().visit(this);
@@ -528,7 +534,10 @@ public class Runtime {
                                     graph.node(target);
                                     graph.edge(edge(nodes.get(expression.getAccessedVariable()), target));
                                     String name = expression.getText();
-                                    currentScriptGraph.node(new Node().id(scriptName+"_"+name)).attr(Attribute.LABEL, name);
+                                    String nodeName = scriptName+"_"+name;
+                                    Node node = new Node().id(nodeName).attr(Attribute.LABEL, name);
+                                    exports.putIfAbsent(nodeName, node);
+                                    currentScriptGraph.node(node);
                                 }
                             });
                         }
@@ -595,7 +604,6 @@ public class Runtime {
         graph.writeTo(out);
         Graphviz g = Graphviz.fromString(out.toString().replaceAll("\\r", ""));
         g = g.scale(1f);
-
         if (type == null) {
             g.renderToFile(new File("target/"+name+".png"));
             try {
