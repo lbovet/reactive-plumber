@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 public abstract class Plumbing extends Flux {
 
@@ -89,6 +87,20 @@ public abstract class Plumbing extends Flux {
 
     public static <T> Iterable<Flux<T>> split(Iterable<Predicate<T>> predicates, Flux<T> f) {
         return fromIterable(predicates).map(f::filter).toIterable();
+    }
+
+    public static <T> Junction<T> join(Flux<T> flux) {
+        return new Junction<>(flux);
+    }
+
+    static class Junction<T> {
+        private Flux<T> t;
+        Junction(Flux<T> t) {
+            this.t = t;
+        }
+        public void to(List<Flux<T>> fluxes) {
+            fluxes.add(t);
+        }
     }
 
     public static void drain(Flux<?>... pipes) {

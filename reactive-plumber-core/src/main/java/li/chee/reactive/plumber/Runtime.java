@@ -49,6 +49,8 @@ public class Runtime {
 
     private Graph overview = null;
     private Graph currentScriptGraph = null;
+    private Map<String,Graph> scriptGraphs = new HashMap<>();
+    private Map<String,Node> coreNodes = new HashMap<>();
     private Map<String, Node> exports = new HashMap<>();
 
     private GroovyShell shell;
@@ -211,6 +213,7 @@ public class Runtime {
                             .nodeWith(nodeStyle)
                             .edgeWith(edgeStyle);
                 }
+                Map<String,Graph> otherGraphs = new HashMap<>();
                 currentScriptGraph = subGraph(scriptName, scriptName);
                 overview.subGraph(currentScriptGraph);
                 BlockStatement block = (BlockStatement) method.getCode();
@@ -348,6 +351,69 @@ public class Runtime {
                             }
                             previousNode = node;
                             call.getObjectExpression().visit(this);
+                        } else if(call.getMethodAsString().equals("to")) {
+                            Node[] src = new Node[1];
+                            call.getObjectExpression().visit(new CodeVisitorSupport() {
+                                @Override
+                                public void visitVariableExpression(VariableExpression expression) {
+                                    src[0] = nodes.get(expression.getAccessedVariable());
+                                }
+                            });
+                            call.getArguments().visit(new CodeVisitorSupport() {
+                                @Override
+                                public void visitPropertyExpression(PropertyExpression expression) {
+                                    if(expression.getObjectExpression() instanceof PropertyExpression) {
+                                        String name = expression.getProperty().getText();
+                                        PropertyExpression exp = (PropertyExpression)expression.getObjectExpression();
+                                        Expression obj = exp.getObjectExpression();
+                                        if(obj instanceof ClassExpression) {
+                                            Expression prop = exp.getProperty();
+                                            Graph otherGraph = otherGraphs.get(prop.getText());
+                                            if(otherGraph == null) {
+                                                otherGraph = subGraph(prop.getText(), prop.getText());
+                                                otherGraph.attr(Attribute.STYLE, StyleAttr.DASHED);
+                                                graph.subGraph(otherGraph);
+                                                otherGraphs.put(prop.getText(), otherGraph);
+                                            }
+                                            String id = (exp.getText()+"."+name).replace(".", "_");
+                                            Node target = new Node().id(id)
+                                                    .attr(Attribute.LABEL, name);
+                                            otherGraph.node(target);
+                                            if(src[0] != null) {
+                                                graph.edge(src[0], target);
+                                            }
+                                            if(exp.getProperty() instanceof ConstantExpression) {
+                                                String otherScript = exp.getProperty().getText();
+                                                String tgtName = otherScript + "_" + name;
+                                                Node srcNode = new Node()
+                                                        .attr(Attribute.LABEL, "");
+                                                currentScriptGraph.node(srcNode);
+                                                Node tgt = exports.get(src);
+                                                if(tgt == null) {
+                                                    tgt = new Node().id(id)
+                                                            .attr(Attribute.LABEL, name);
+                                                    Graph scriptGraph = scriptGraphs.get(otherScript);
+                                                    if(scriptGraph == null) {
+                                                        scriptGraph = subGraph(otherScript, otherScript);
+                                                        overview.subGraph(scriptGraph);
+                                                        scriptGraphs.put(otherScript, scriptGraph);
+                                                    }
+                                                    scriptGraph.node(tgt);
+                                                    exports.put(tgtName, tgt);
+                                                }
+                                                Node core = coreNodes.get(scriptName);
+                                                if(core != null) {
+                                                    currentScriptGraph.edge(edge(core, srcNode).attr(Attribute.STYLE, StyleAttr.INVIS));
+                                                }
+                                                overview.edge(srcNode, tgt);
+                                            }
+                                        }
+                                    } else {
+                                        expression.getObjectExpression().visit(this);
+                                        expression.getProperty().visit(this);
+                                    }
+                                }
+                            });
                         }
                     }
 
@@ -378,8 +444,10 @@ public class Runtime {
 
                                                 @Override
                                                 public void visitConstantExpression(ConstantExpression expression) {
-                                                    label.append(" ")
-                                                            .append(statics(expression.getValue().toString()));
+                                                    if(!expression.getValue().toString().equals("exports")) {
+                                                        label.append(" ")
+                                                                .append(statics(expression.getValue().toString()));
+                                                    }
                                                 }
                                             });
                                             node[0] = new Node()
@@ -416,9 +484,13 @@ public class Runtime {
                                                 Expression obj = exp.getObjectExpression();
                                                 if(obj instanceof ClassExpression) {
                                                     Expression prop = exp.getProperty();
-                                                    Graph sourceGraph = subGraph(prop.getText(), prop.getText());
-                                                    sourceGraph.attr(Attribute.STYLE, StyleAttr.DASHED);
-                                                    graph.subGraph(sourceGraph);
+                                                    Graph sourceGraph = otherGraphs.get(prop.getText());
+                                                    if(sourceGraph == null) {
+                                                        sourceGraph = subGraph(prop.getText(), prop.getText());
+                                                        sourceGraph.attr(Attribute.STYLE, StyleAttr.DASHED);
+                                                        graph.subGraph(sourceGraph);
+                                                        otherGraphs.put(prop.getText(), sourceGraph);
+                                                    }
                                                     String id = (exp.getText()+"."+name).replace(".", "_");
                                                     Node source = new Node().id(id)
                                                             .attr(Attribute.LABEL, name);
@@ -429,6 +501,8 @@ public class Runtime {
                                                         Node target = new Node().attr(Attribute.LABEL, "");
                                                         Node srcNode = exports.get(src);
                                                         currentScriptGraph.node(target);
+                                                        currentScriptGraph.attr(Attribute.RANKSEP, 0.3f);
+                                                        coreNodes.put(scriptName, target);
                                                         overview.edge(srcNode, target);
                                                     }
                                                 }
@@ -538,6 +612,11 @@ public class Runtime {
                                     Node node = new Node().id(nodeName).attr(Attribute.LABEL, name);
                                     exports.putIfAbsent(nodeName, node);
                                     currentScriptGraph.node(node);
+                                    Node core = coreNodes.get(scriptName);
+                                    if(core != null) {
+                                        overview.edge(edge(core, node).attr(Attribute.STYLE, StyleAttr.INVIS));
+                                    }
+
                                 }
                             });
                         }

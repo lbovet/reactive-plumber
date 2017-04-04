@@ -2,8 +2,8 @@ package li.chee.reactive.plumber;
 
 import examples.four.first.First;
 import examples.four.second.Second;
+import examples.four.third.Third;
 import org.junit.Test;
-import reactor.core.publisher.ConnectableFlux;
 import reactor.core.publisher.Flux;
 
 import java.io.IOException;
@@ -11,12 +11,9 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertArrayEquals;
-import static reactor.core.publisher.Flux.fromIterable;
 import static reactor.core.publisher.Flux.just;
 import static reactor.core.publisher.Flux.range;
 
@@ -47,6 +44,7 @@ public class GenericPlumbingTest {
         new Runtime(true)
                 .run(First.class.getResource("first.groovy").toURI())
                 .run(Second.class.getResource("second.groovy").toURI())
+                .run(Third.class.getResource("third.groovy").toURI())
                 .generateOverviewGraph();
     }
 

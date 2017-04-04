@@ -14,9 +14,5 @@ def odd = pipe {
     reduce "Odd:", line
 }
 
-def output = pipe {
-    from merge(even, odd) \
-    doOnNext show()
-}
-
-drain output
+join even to third.strings
+join odd to third.strings
