@@ -616,7 +616,6 @@ public class Runtime {
                                     if(core != null) {
                                         overview.edge(edge(core, node).attr(Attribute.STYLE, StyleAttr.INVIS));
                                     }
-
                                 }
                             });
                         }
