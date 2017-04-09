@@ -41,6 +41,7 @@ public class GenericPlumbingTest {
 
     @Test
     public void testRuntimeFour() throws IOException, URISyntaxException {
+        Third.exports.strings.clear();
         new Runtime(true)
                 .run(First.class.getResource("first.groovy").toURI())
                 .run(Second.class.getResource("second.groovy").toURI())
@@ -63,6 +64,9 @@ public class GenericPlumbingTest {
         First.exports.even = just(2,4,6);
         First.exports.odd = just(1,3,5);
         r.run(Second.class.getResource("second.groovy").toURI());
+        List<String> strings = new ArrayList<>();
+        Third.drain(Flux.merge(Third.exports.strings).doOnNext(strings::add));
+        assertArrayEquals(new String[]{ "Odd: 1 3 5", "Even: 2 4 6"}, strings.toArray());
     }
 
     @Test
