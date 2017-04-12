@@ -405,7 +405,7 @@ public class Runtime {
                                                 if(core != null) {
                                                     currentScriptGraph.edge(edge(core, srcNode).attr(Attribute.STYLE, StyleAttr.INVIS));
                                                 }
-                                                overview.edge(srcNode, tgt);
+                                                overview.edge(edge(srcNode, tgt));
                                             }
                                         }
                                     } else {
@@ -440,6 +440,11 @@ public class Runtime {
                                                 @Override
                                                 public void visitVariableExpression(VariableExpression expression) {
                                                     sources.add(nodes.get(expression.getAccessedVariable()));
+                                                }
+
+                                                @Override
+                                                public void visitPropertyExpression(PropertyExpression expression) {
+                                                    visitPropertyExpressionInternal(expression, sources);
                                                 }
 
                                                 @Override
@@ -478,6 +483,9 @@ public class Runtime {
 
                                         @Override
                                         public void visitPropertyExpression(PropertyExpression expression) {
+                                            visitPropertyExpressionInternal(expression, null);
+                                        }
+                                        private void visitPropertyExpressionInternal(PropertyExpression expression, List<Node> sources) {
                                             if(expression.getObjectExpression() instanceof PropertyExpression) {
                                                 String name = expression.getProperty().getText();
                                                 PropertyExpression exp = (PropertyExpression)expression.getObjectExpression();
@@ -494,16 +502,22 @@ public class Runtime {
                                                     String id = (exp.getText()+"."+name).replace(".", "_");
                                                     Node source = new Node().id(id)
                                                             .attr(Attribute.LABEL, name);
+                                                    if(sources != null) {
+                                                        sources.add(source);
+                                                    } else {
+                                                        linkToPrevious(source);
+                                                    }
                                                     sourceGraph.node(source);
-                                                    linkToPrevious(source);
                                                     if(exp.getProperty() instanceof ConstantExpression) {
                                                         String src = exp.getProperty().getText() + "_" + name;
                                                         Node target = new Node().attr(Attribute.LABEL, "");
                                                         Node srcNode = exports.get(src);
-                                                        currentScriptGraph.node(target);
-                                                        currentScriptGraph.attr(Attribute.RANKSEP, 0.3f);
-                                                        coreNodes.put(scriptName, target);
-                                                        overview.edge(srcNode, target);
+                                                        if(srcNode != null) {
+                                                            currentScriptGraph.node(target);
+                                                            currentScriptGraph.attr(Attribute.RANKSEP, 0.3f);
+                                                            coreNodes.put(scriptName, target);
+                                                            overview.edge(edge(srcNode, target));
+                                                        }
                                                     }
                                                 }
                                             } else {
