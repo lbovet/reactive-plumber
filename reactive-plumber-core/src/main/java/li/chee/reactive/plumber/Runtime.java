@@ -45,9 +45,19 @@ public class Runtime {
         }
     }
 
+    public enum OverviewGraphDetailLevel {
+        INTERNALS(5),
+        SCRIPTS(1);
+        private int level;
+        OverviewGraphDetailLevel(int level) {
+            this.level = level;
+        }
+    }
+
     private boolean generateGraph = false;
 
     private Graph overview = null;
+    private OverviewGraphDetailLevel overviewGraphDetailLevel = OverviewGraphDetailLevel.INTERNALS;
     private Graph currentScriptGraph = null;
     private Map<String,Graph> scriptGraphs = new HashMap<>();
     private Map<String,Node> coreNodes = new HashMap<>();
@@ -67,6 +77,10 @@ public class Runtime {
         this.hideToLinks = !showToLinks;
     }
 
+    public void setOverviewGraphDetailLevel(OverviewGraphDetailLevel overviewGraphDetailLevel) {
+        this.overviewGraphDetailLevel = overviewGraphDetailLevel;
+    }
+
     public Runtime withGraphTheme(GraphTheme theme) {
         setGraphTheme(theme);
         return this;
@@ -74,6 +88,11 @@ public class Runtime {
 
     public Runtime withGraphShowToLinks(boolean showToLinks) {
         setGraphShowToLinks(showToLinks);
+        return this;
+    }
+
+    public Runtime withOverviewGraphDetailLevel(OverviewGraphDetailLevel overviewGraphDetailLevel) {
+        setOverviewGraphDetailLevel(overviewGraphDetailLevel);
         return this;
     }
 
@@ -513,10 +532,14 @@ public class Runtime {
                                                         Node target = new Node().attr(Attribute.LABEL, "");
                                                         Node srcNode = exports.get(src);
                                                         if(srcNode != null) {
-                                                            currentScriptGraph.node(target);
-                                                            currentScriptGraph.attr(Attribute.RANKSEP, 0.3f);
-                                                            coreNodes.put(scriptName, target);
-                                                            overview.edge(edge(srcNode, target));
+                                                            if(overviewGraphDetailLevel.level >= OverviewGraphDetailLevel.INTERNALS.level) {
+                                                                currentScriptGraph.node(target);
+                                                                currentScriptGraph.attr(Attribute.RANKSEP, 0.3f);
+                                                                coreNodes.put(scriptName, target);
+                                                                overview.edge(edge(srcNode, target));
+                                                            } else {
+                                                                overview.edge(edge(srcNode, new Node().id("cluster_"+scriptName)));
+                                                            }
                                                         }
                                                     }
                                                 }
