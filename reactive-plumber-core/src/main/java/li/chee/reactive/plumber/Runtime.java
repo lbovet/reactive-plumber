@@ -64,13 +64,17 @@ public class Runtime {
     private Map<String, Node> exports = new HashMap<>();
 
     private GroovyShell shell;
-
     private GraphTheme theme = GraphTheme.DARK;
+    private String graphOutputDir = "target/graphs";
 
     private boolean hideToLinks = true;
 
     public void setGraphTheme(GraphTheme theme) {
         this.theme = theme;
+    }
+
+    public void setGraphOutputDir(String graphOutputDir) {
+        this.graphOutputDir = graphOutputDir;
     }
 
     public void setGraphShowToLinks(boolean showToLinks) {
@@ -88,6 +92,11 @@ public class Runtime {
 
     public Runtime withGraphShowToLinks(boolean showToLinks) {
         setGraphShowToLinks(showToLinks);
+        return this;
+    }
+
+    public Runtime withGraphOutputDir(String dir) {
+        setGraphOutputDir(dir);
         return this;
     }
 
@@ -718,11 +727,13 @@ public class Runtime {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         graph.writeTo(out);
         Graphviz g = Graphviz.fromString(out.toString().replaceAll("\\r", ""));
+        File dir = new File(graphOutputDir);
+        dir.mkdirs();
         g = g.scale(1f);
         if (type == null) {
-            g.renderToFile(new File("target/"+name+".png"));
+            g.renderToFile(new File(dir, name+".png"));
             try {
-                Files.write(Paths.get("target/"+name+".svg"), g.createSvg().getBytes(Charset.forName("UTF8")));
+                Files.write(Paths.get(dir+"/"+name+".svg"), g.createSvg().getBytes(Charset.forName("UTF8")));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
