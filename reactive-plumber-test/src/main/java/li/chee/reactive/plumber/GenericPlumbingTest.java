@@ -3,7 +3,9 @@ package li.chee.reactive.plumber;
 import examples.four.first.First;
 import examples.four.second.Second;
 import examples.four.third.Third;
+import org.bitstrings.test.junit.runner.ClassLoaderPerTestRunner;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import reactor.core.publisher.Flux;
 
 import java.io.IOException;
@@ -20,6 +22,7 @@ import static reactor.core.publisher.Flux.range;
 /**
  * Tests the plumbing tools using groovy scripts.
  */
+@RunWith(ClassLoaderPerTestRunner.class)
 public class GenericPlumbingTest {
 
     private static String ROOT = "../reactive-plumber-test/src/main/resources/examples";
@@ -41,7 +44,6 @@ public class GenericPlumbingTest {
 
     @Test
     public void testRuntimeFour() throws IOException, URISyntaxException {
-        Third.exports.strings.clear();
         new Runtime(true)
                 .run(First.class.getResource("first.groovy").toURI())
                 .run(Second.class.getResource("second.groovy").toURI())
@@ -54,7 +56,7 @@ public class GenericPlumbingTest {
         Runtime r = new Runtime(true);
         r.run(First.class.getResource("first.groovy").toURI());
         List<Integer> numbers = new ArrayList<>();
-        First.drain(First.exports.even.doOnNext(numbers::add));
+        Plumbing.drain(First.exports.even.doOnNext(numbers::add));
         assertArrayEquals(new Integer[]{ 2, 4}, numbers.toArray());
     }
 
@@ -65,7 +67,7 @@ public class GenericPlumbingTest {
         First.exports.odd = just(1,3,5);
         r.run(Second.class.getResource("second.groovy").toURI());
         List<String> strings = new ArrayList<>();
-        Third.drain(Flux.merge(Third.exports.strings).doOnNext(strings::add));
+        Plumbing.drain(Flux.merge(Third.exports.strings).doOnNext(strings::add));
         assertArrayEquals(new String[]{ "Odd: 1 3 5", "Even: 2 4 6"}, strings.toArray());
     }
 
