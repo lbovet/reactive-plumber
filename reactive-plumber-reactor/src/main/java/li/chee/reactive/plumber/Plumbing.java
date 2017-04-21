@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public abstract class Plumbing extends Flux {
@@ -70,6 +71,10 @@ public abstract class Plumbing extends Flux {
 
     public static <T, U extends Flux<T>> ParallelFlux<T> parallel(U f) {
         return f.parallel().runOn(Schedulers.parallel());
+    }
+
+    public static <T> Function<Flux<T>, Flux<T>> fork() {
+        return (f) -> f.publishOn(Schedulers.elastic());
     }
 
     public static <T> Flux<T> concurrent(Flux<T> f) {
