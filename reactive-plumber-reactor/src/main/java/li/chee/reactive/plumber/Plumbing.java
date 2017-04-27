@@ -78,7 +78,7 @@ public abstract class Plumbing extends Flux {
     }
 
     public static <T> Flux<T> concurrent(Flux<T> f) {
-        return f.publishOn(Schedulers.parallel());
+        return f.subscribeOn(Schedulers.parallel());
     }
 
     public static <K,T> Flux<Flux<T>> each(Flux<? extends GroupedFlux<K,T>> streams, Closure<? extends Publisher<T>> closure) {
