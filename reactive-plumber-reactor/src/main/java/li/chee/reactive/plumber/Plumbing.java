@@ -111,7 +111,7 @@ public abstract class Plumbing extends Flux {
     public static void drain(Flux<?>... pipes) {
         CountDownLatch latch = new CountDownLatch(1);
         fromArray(pipes)
-                .flatMap( p -> p.last().flux())
+                .flatMap(Function.identity())
                 .doOnComplete(latch::countDown)
                 .subscribe();
         Collections.reverse(connectables);
