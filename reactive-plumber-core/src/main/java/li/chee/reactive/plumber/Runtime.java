@@ -286,7 +286,9 @@ public class Runtime {
                                     new CodeVisitorSupport() {
                                         @Override
                                         public void visitStaticMethodCallExpression(StaticMethodCallExpression call) {
-                                            label.append(" ").append(statics(call.getMethodAsString()));
+                                            if(!commonMethods.contains(call.getMethodAsString())) {
+                                                label.append(" ").append(statics(call.getMethodAsString()));
+                                            }
                                             call.getArguments().visit(this);
                                         }
 
@@ -340,6 +342,11 @@ public class Runtime {
                                         public void visitConstantExpression(ConstantExpression expression) {
                                             label.append(" ")
                                                     .append(statics(expression.getValue().toString()));
+                                        }
+
+                                        @Override
+                                        public void visitPropertyExpression(PropertyExpression expression) {
+                                            visitPropertyExpressionInternal(expression, peers, this);
                                         }
 
                                         @Override
@@ -445,6 +452,60 @@ public class Runtime {
                         }
                     }
 
+                    private void linkToPrevious(Node source) {
+                        if(previousNode != null) {
+                            Edge edge = edge(source, previousNode);
+                            graph.edge(edge);
+                        } else {
+                            nodes.putIfAbsent(currentDeclaration.getVariableExpression(), source);
+                        }
+                    }
+
+                    private void visitPropertyExpressionInternal(PropertyExpression expression, List<Node> sources, GroovyCodeVisitor visitor) {
+                        if(expression.getObjectExpression() instanceof PropertyExpression) {
+                            String name = expression.getProperty().getText();
+                            PropertyExpression exp = (PropertyExpression)expression.getObjectExpression();
+                            Expression obj = exp.getObjectExpression();
+                            if(obj instanceof ClassExpression) {
+                                Expression prop = exp.getProperty();
+                                Graph sourceGraph = otherGraphs.get(prop.getText());
+                                if(sourceGraph == null) {
+                                    sourceGraph = subGraph(prop.getText(), prop.getText());
+                                    sourceGraph.attr(Attribute.STYLE, StyleAttr.DASHED);
+                                    graph.subGraph(sourceGraph);
+                                    otherGraphs.put(prop.getText(), sourceGraph);
+                                }
+                                String id = (exp.getText()+"."+name).replace(".", "_");
+                                Node source = new Node().id(id)
+                                        .attr(Attribute.LABEL, name);
+                                if(sources != null) {
+                                    sources.add(source);
+                                } else {
+                                    linkToPrevious(source);
+                                }
+                                sourceGraph.node(source);
+                                if(exp.getProperty() instanceof ConstantExpression) {
+                                    String src = exp.getProperty().getText() + "_" + name;
+                                    Node target = new Node().attr(Attribute.LABEL, "");
+                                    Node srcNode = exports.get(src);
+                                    if(srcNode != null) {
+                                        if(overviewGraphDetailLevel.level >= OverviewGraphDetailLevel.INTERNALS.level) {
+                                            currentScriptGraph.node(target);
+                                            currentScriptGraph.attr(Attribute.RANKSEP, 0.3f);
+                                            coreNodes.put(scriptName, target);
+                                            overview.edge(edge(srcNode, target));
+                                        } else {
+                                            overview.edge(edge(srcNode, new Node().id("cluster_"+scriptName)));
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            expression.getObjectExpression().visit(visitor);
+                            expression.getProperty().visit(visitor);
+                        }
+                    }
+
                     @Override
                     public void visitStaticMethodCallExpression(StaticMethodCallExpression call) {
                         if (currentSubGraph != null && call.getMethodAsString().startsWith("from")) {
@@ -455,13 +516,15 @@ public class Runtime {
                                         public void visitStaticMethodCallExpression(StaticMethodCallExpression call) {
                                             List<Node> sources = new ArrayList<>();
                                             StringBuilder label = new StringBuilder();
-                                            if(!commonMethods.contains(call.getMethod())) {
+                                            if(!commonMethods.contains(call.getMethodAsString())) {
                                                 label.append(html(statics(call.getMethodAsString())));
                                             }
                                             call.getArguments().visit(new CodeVisitorSupport() {
                                                 @Override
                                                 public void visitStaticMethodCallExpression(StaticMethodCallExpression call) {
-                                                    label.append(" ").append(statics(call.getMethodAsString()));
+                                                    if(!commonMethods.contains(call.getMethodAsString())) {
+                                                        label.append(" ").append(statics(call.getMethodAsString()));
+                                                    }
                                                     call.getArguments().visit(this);
                                                 }
 
@@ -472,7 +535,7 @@ public class Runtime {
 
                                                 @Override
                                                 public void visitPropertyExpression(PropertyExpression expression) {
-                                                    visitPropertyExpressionInternal(expression, sources);
+                                                    visitPropertyExpressionInternal(expression, sources, this);
                                                 }
 
                                                 @Override
@@ -511,51 +574,7 @@ public class Runtime {
 
                                         @Override
                                         public void visitPropertyExpression(PropertyExpression expression) {
-                                            visitPropertyExpressionInternal(expression, null);
-                                        }
-                                        private void visitPropertyExpressionInternal(PropertyExpression expression, List<Node> sources) {
-                                            if(expression.getObjectExpression() instanceof PropertyExpression) {
-                                                String name = expression.getProperty().getText();
-                                                PropertyExpression exp = (PropertyExpression)expression.getObjectExpression();
-                                                Expression obj = exp.getObjectExpression();
-                                                if(obj instanceof ClassExpression) {
-                                                    Expression prop = exp.getProperty();
-                                                    Graph sourceGraph = otherGraphs.get(prop.getText());
-                                                    if(sourceGraph == null) {
-                                                        sourceGraph = subGraph(prop.getText(), prop.getText());
-                                                        sourceGraph.attr(Attribute.STYLE, StyleAttr.DASHED);
-                                                        graph.subGraph(sourceGraph);
-                                                        otherGraphs.put(prop.getText(), sourceGraph);
-                                                    }
-                                                    String id = (exp.getText()+"."+name).replace(".", "_");
-                                                    Node source = new Node().id(id)
-                                                            .attr(Attribute.LABEL, name);
-                                                    if(sources != null) {
-                                                        sources.add(source);
-                                                    } else {
-                                                        linkToPrevious(source);
-                                                    }
-                                                    sourceGraph.node(source);
-                                                    if(exp.getProperty() instanceof ConstantExpression) {
-                                                        String src = exp.getProperty().getText() + "_" + name;
-                                                        Node target = new Node().attr(Attribute.LABEL, "");
-                                                        Node srcNode = exports.get(src);
-                                                        if(srcNode != null) {
-                                                            if(overviewGraphDetailLevel.level >= OverviewGraphDetailLevel.INTERNALS.level) {
-                                                                currentScriptGraph.node(target);
-                                                                currentScriptGraph.attr(Attribute.RANKSEP, 0.3f);
-                                                                coreNodes.put(scriptName, target);
-                                                                overview.edge(edge(srcNode, target));
-                                                            } else {
-                                                                overview.edge(edge(srcNode, new Node().id("cluster_"+scriptName)));
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            } else {
-                                                expression.getObjectExpression().visit(this);
-                                                expression.getProperty().visit(this);
-                                            }
+                                            visitPropertyExpressionInternal(expression, null, this);
                                         }
 
                                         @Override
@@ -564,15 +583,6 @@ public class Runtime {
                                                     .attr(Attribute.LABEL, expression.getText());
                                             graph.node(source);
                                             linkToPrevious(source);
-                                        }
-
-                                        private void linkToPrevious(Node source) {
-                                            if(previousNode != null) {
-                                                Edge edge = edge(source, previousNode);
-                                                graph.edge(edge);
-                                            } else {
-                                                nodes.putIfAbsent(currentDeclaration.getVariableExpression(), source);
-                                            }
                                         }
 
                                         @Override
