@@ -45,23 +45,12 @@ public class Runtime {
         }
     }
 
-    public enum OverviewGraphDetailLevel {
-        INTERNALS(5),
-        SCRIPTS(1);
-        private int level;
-        OverviewGraphDetailLevel(int level) {
-            this.level = level;
-        }
-    }
-
     private boolean generateGraph = false;
 
     private Graph overview = null;
-    private OverviewGraphDetailLevel overviewGraphDetailLevel = OverviewGraphDetailLevel.INTERNALS;
-    private Graph currentScriptGraph = null;
-    private Map<String,Graph> scriptGraphs = new HashMap<>();
-    private Map<String,Node> coreNodes = new HashMap<>();
-    private Map<String, Node> exports = new HashMap<>();
+    private Map<String, Node> scriptNodes = new HashMap<>();
+    private Map<String, Edge> scriptEdges = new HashMap<>();
+    private Map<String, String> junctions = new HashMap<>();
 
     private GroovyShell shell;
     private GraphTheme theme = GraphTheme.DARK;
@@ -81,9 +70,6 @@ public class Runtime {
         this.hideToLinks = !showToLinks;
     }
 
-    public void setOverviewGraphDetailLevel(OverviewGraphDetailLevel overviewGraphDetailLevel) {
-        this.overviewGraphDetailLevel = overviewGraphDetailLevel;
-    }
 
     public Runtime withGraphTheme(GraphTheme theme) {
         setGraphTheme(theme);
@@ -97,11 +83,6 @@ public class Runtime {
 
     public Runtime withGraphOutputDir(String dir) {
         setGraphOutputDir(dir);
-        return this;
-    }
-
-    public Runtime withOverviewGraphDetailLevel(OverviewGraphDetailLevel overviewGraphDetailLevel) {
-        setOverviewGraphDetailLevel(overviewGraphDetailLevel);
         return this;
     }
 
@@ -149,6 +130,8 @@ public class Runtime {
 
     public Runtime generateOverviewGraph(String type, OutputStream output) {
         if(overview != null) {
+            scriptNodes.values().forEach(node -> overview.node(node));
+            scriptEdges.values().forEach(edge -> overview.edge(edge));
             createGraph(overview, "overview", type, output);
         }
         return this;
@@ -242,8 +225,6 @@ public class Runtime {
                             .edgeWith(edgeStyle);
                 }
                 Map<String,Graph> otherGraphs = new HashMap<>();
-                currentScriptGraph = subGraph(scriptName, scriptName);
-                overview.subGraph(currentScriptGraph);
                 BlockStatement block = (BlockStatement) method.getCode();
                 block.visit(new CodeVisitorSupport() {
                     @Override
@@ -420,27 +401,7 @@ public class Runtime {
                                             if(exp.getProperty() instanceof ConstantExpression) {
                                                 String otherScript = exp.getProperty().getText();
                                                 String tgtName = otherScript + "_" + name;
-                                                Node srcNode = new Node()
-                                                        .attr(Attribute.LABEL, "");
-                                                currentScriptGraph.node(srcNode);
-                                                Node tgt = exports.get(src);
-                                                if(tgt == null) {
-                                                    tgt = new Node().id(id)
-                                                            .attr(Attribute.LABEL, name);
-                                                    Graph scriptGraph = scriptGraphs.get(otherScript);
-                                                    if(scriptGraph == null) {
-                                                        scriptGraph = subGraph(otherScript, otherScript);
-                                                        overview.subGraph(scriptGraph);
-                                                        scriptGraphs.put(otherScript, scriptGraph);
-                                                    }
-                                                    scriptGraph.node(tgt);
-                                                    exports.put(tgtName, tgt);
-                                                }
-                                                Node core = coreNodes.get(scriptName);
-                                                if(core != null) {
-                                                    currentScriptGraph.edge(edge(core, srcNode).attr(Attribute.STYLE, StyleAttr.INVIS));
-                                                }
-                                                overview.edge(edge(srcNode, tgt));
+                                                junctions.put(tgtName, scriptName);
                                             }
                                         }
                                     } else {
@@ -485,19 +446,13 @@ public class Runtime {
                                 }
                                 sourceGraph.node(source);
                                 if(exp.getProperty() instanceof ConstantExpression) {
-                                    String src = exp.getProperty().getText() + "_" + name;
-                                    Node target = new Node().attr(Attribute.LABEL, "");
-                                    Node srcNode = exports.get(src);
-                                    if(srcNode != null) {
-                                        if(overviewGraphDetailLevel.level >= OverviewGraphDetailLevel.INTERNALS.level) {
-                                            currentScriptGraph.node(target);
-                                            currentScriptGraph.attr(Attribute.RANKSEP, 0.3f);
-                                            coreNodes.put(scriptName, target);
-                                            overview.edge(edge(srcNode, target));
-                                        } else {
-                                            overview.edge(edge(srcNode, new Node().id("cluster_"+scriptName)));
-                                        }
+                                    String src;
+                                    if(exp.getProperty().getText().equals("exports")) {
+                                        src = junctions.get(scriptName+"_"+name);
+                                    } else {
+                                        src = exp.getProperty().getText();
                                     }
+                                    scriptEdge(src, scriptName, name);
                                 }
                             }
                         } else {
@@ -623,6 +578,7 @@ public class Runtime {
                                             edge[0] = edge(source, target);
                                             edge[0].attr(Attribute.LABEL, "" + count.incrementAndGet());
                                             graph.edge(edge[0]);
+                                            scriptEdge(scriptName, null, expression.getAccessedVariable().getName());
                                         }
                                     });
                             if (count.get() == 1) {
@@ -663,15 +619,6 @@ public class Runtime {
                                             .attr(Attribute.LABEL, "");
                                     graph.node(target);
                                     graph.edge(edge(nodes.get(expression.getAccessedVariable()), target));
-                                    String name = expression.getText();
-                                    String nodeName = scriptName+"_"+name;
-                                    Node node = new Node().id(nodeName).attr(Attribute.LABEL, name);
-                                    exports.putIfAbsent(nodeName, node);
-                                    currentScriptGraph.node(node);
-                                    Node core = coreNodes.get(scriptName);
-                                    if(core != null) {
-                                        overview.edge(edge(core, node).attr(Attribute.STYLE, StyleAttr.INVIS));
-                                    }
                                 }
                             });
                         }
@@ -709,6 +656,28 @@ public class Runtime {
                     from = new Node().id("unknown");
                 }
                 return new Edge(from, to);
+            }
+
+            private Node end = new Node()
+                            .attr(Attribute.SHAPE, Shape.CIRCLE)
+                            .attr(Attribute.WIDTH, 0.2F)
+                            .attr(Attribute.FIXEDSIZE, true)
+                            .attr(Attribute.LABEL, "");
+            private void scriptEdge(String from, String to, String label) {
+                scriptNodes.putIfAbsent(from, new Node().id(from));
+                Node target;
+                if(to == null) {
+                    to = "<<<END>>>";
+                    target = end;
+                } else {
+                    target = new Node().id(to);
+                }
+                scriptNodes.putIfAbsent(to, target);
+                scriptEdges.putIfAbsent(from+"_"+to, new Edge(scriptNodes.get(from), scriptNodes.get(to)));
+                Edge edge = scriptEdges.get(from+"_"+to);
+                if(edge.attr(Attribute.LABEL) == null || !edge.attr(Attribute.LABEL).matches(".*(\\\\l)?"+label+"\\\\?.*")) {
+                    edge.attr(Attribute.LABEL, (edge.attr(Attribute.LABEL) != null ? edge.attr(Attribute.LABEL) + "\\l" : "") + label.trim());
+                }
             }
 
             private String statics(String name) {
