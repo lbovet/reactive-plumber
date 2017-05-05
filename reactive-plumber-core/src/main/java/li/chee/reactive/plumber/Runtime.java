@@ -200,11 +200,11 @@ public class Runtime {
                     .attr(Attribute.FONTNAME, "arial")
                     .attr(Attribute.FONTSIZE, 8f)
                     .attr(Attribute.COLOR, theme.box)
+                    .attr(Attribute.FONTCOLOR, theme.text)
                     .attr(Attribute.SHAPE, Shape.RECTANGLE)
                     .attr(Attribute.HEIGHT, 0.2F)
                     .attr(Attribute.MARGIN, 0.11F)
-                    .attr(Attribute.FONTCOLOR, theme.box)
-                    .attr(Attribute.STYLE, StyleAttr.DASHED);
+                    .attr("style", "filled");
             Graph graph;
             Graph currentSubGraph;
             List<Node> currentSources;
