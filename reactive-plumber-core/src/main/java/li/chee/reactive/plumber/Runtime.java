@@ -220,16 +220,19 @@ public class Runtime {
             public void call(SourceUnit sourceUnit, GeneratorContext generatorContext, ClassNode classNode) throws CompilationFailedException {
                 final String scriptName = new ArrayDeque<>(Arrays.asList(sourceUnit.getName().split("/"))).removeLast().split("\\.")[0];
                 try {
-                    String html = PrettifyToHtml.parseAndConvert(readStream(sourceUnit.getSource().getURI().toURL().openStream()));
-                    HashMap<String,Object> vars = new HashMap<>();
-                    vars.put("title", scriptName);
-                    vars.put("content", html);
-                    vars.put("upDestination", scriptName);
-                    html = applyTemplate(vars);
-                    new File("target/graphs").mkdirs();
-                    Files.write(Paths.get("target/graphs/"+scriptName+"-source.html"), html.getBytes());
+                    URI uri = sourceUnit.getSource().getURI();
+                    if(!uri.getScheme().equals("data")) {
+                        String html = PrettifyToHtml.parseAndConvert(readStream(uri.toURL().openStream()));
+                        HashMap<String, Object> vars = new HashMap<>();
+                        vars.put("title", scriptName);
+                        vars.put("content", html);
+                        vars.put("upDestination", scriptName);
+                        html = applyTemplate(vars);
+                        new File("target/graphs").mkdirs();
+                        Files.write(Paths.get("target/graphs/" + scriptName + "-source.html"), html.getBytes());
+                    }
                 } catch(IOException e) {
-                    throw new RuntimeException();
+                    throw new RuntimeException(e);
                 }
                 MethodNode method = classNode.getDeclaredMethod("run", new Parameter[0]);
                 if (method == null) {
