@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>${title}</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica;
+            text-align: center;
+            font-size: 120%;
+        }
+        .icon {
+            font-weight: normal;
+            color: grey;
+            text-decoration: none;
+        }
+        .source-block {
+            display: inline-block;
+            text-align: left;
+        }
+        .line {
+            padding-right: 3px;
+            padding-left: 3px;
+            padding-top: 2px;
+            padding-bottom: 1px;
+            height: 20px;
+        }
+        .highlighted {
+            background-color: #FFFFD8;
+        }
+    </style>
+</head>
+<body>
+${if upDestination}
+<a class="icon" href='${upDestination}.html'>🡡</a>
+${else}
+&nbsp;
+${end}
+<h2 id="title">${title}</h2>
+${content}
+</body>
+<script>
+    function getLines() {
+        var lines = location.hash;
+        if(!lines && lines.length <= 1 && lines.indexOf('#') != 0) return;
+        lines = lines.substring(1);
+        lines = lines.split('-');
+        if(lines.length == 1) lines.push(lines[0]);
+        lines = lines.map(function(n) { return Number(n) });
+        if(isNaN(lines[0]) || isNaN(lines[1])) return;
+        return lines;
+    }
+    function highlight() {
+        var highlight = getLines();
+        var lines = document.querySelectorAll(".line");
+        for(var i=0; i<lines.length; i++) {
+            if(highlight && i+1 >= highlight[0] && i+1 <= highlight[1]) {
+                lines[i].className="line highlighted";
+            } else {
+                lines[i].className="line";
+            }
+        }
+    }
+    window.onhashchange = highlight;
+    highlight();
+</script>
+</html>

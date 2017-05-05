@@ -45,6 +45,7 @@ public class GenericPlumbingTest {
     @Test
     public void testRuntimeFour() throws IOException, URISyntaxException {
         new Runtime(true)
+                .withGraphTheme(Runtime.GraphTheme.LIGHT)
                 .run(First.class.getResource("first.groovy").toURI())
                 .run(Second.class.getResource("second.groovy").toURI())
                 .run(Third.class.getResource("third.groovy").toURI())

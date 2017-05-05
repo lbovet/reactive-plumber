@@ -1,5 +1,6 @@
 package li.chee.reactive.plumber;
 
+import com.floreysoft.jmte.Engine;
 import groovy.lang.GroovyShell;
 import guru.nidi.graphviz.engine.Graphviz;
 import org.codehaus.groovy.ast.*;
@@ -13,6 +14,7 @@ import org.codehaus.groovy.control.SourceUnit;
 import org.codehaus.groovy.control.customizers.CompilationCustomizer;
 import org.kohsuke.graphviz.*;
 import org.kohsuke.graphviz.Shape;
+import syntaxhighlight.PrettifyToHtml;
 
 import java.awt.Color;
 import java.io.*;
@@ -23,6 +25,8 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.awt.Color.*;
 
@@ -115,7 +119,7 @@ public class Runtime {
         config.addCompilationCustomizers(getGraphOutputCustomizer());
         GroovyShell shell = new GroovyShell(config);
         try {
-            for(URI source : sources) {
+            for (URI source : sources) {
                 shell.parse(source);
             }
         } catch (IOException e) {
@@ -129,7 +133,7 @@ public class Runtime {
     }
 
     public Runtime generateOverviewGraph(String type, OutputStream output) {
-        if(overview != null) {
+        if (overview != null) {
             scriptNodes.values().forEach(node -> overview.node(node));
             scriptEdges.values().forEach(edge -> overview.edge(edge));
             createGraph(overview, "overview", type, output);
@@ -140,7 +144,7 @@ public class Runtime {
     public Runtime run(URI... sources) {
         init();
         try {
-            for(URI source : sources) {
+            for (URI source : sources) {
                 shell.evaluate(source);
             }
         } catch (IOException e) {
@@ -162,7 +166,7 @@ public class Runtime {
     }
 
     private void init() {
-        if(shell == null) {
+        if (shell == null) {
             CompilerConfiguration config = new CompilerConfiguration();
             if (generateGraph) {
                 config.addCompilationCustomizers(getGraphOutputCustomizer());
@@ -186,7 +190,8 @@ public class Runtime {
                     .attr(Attribute.FONTNAME, "arial")
                     .attr(Attribute.FONTSIZE, 7f)
                     .attr(Attribute.FONTCOLOR, theme.box)
-                    .attr(Attribute.ARROWSIZE, 0.7f);
+                    .attr(Attribute.ARROWSIZE, 0.7f)
+                    .attr("tooltip", " ");
             Style nodeStyle = new Style()
                     .attr(Attribute.FONTNAME, "arial")
                     .attr(Attribute.FONTSIZE, 8f)
@@ -195,7 +200,8 @@ public class Runtime {
                     .attr(Attribute.SHAPE, Shape.RECTANGLE)
                     .attr(Attribute.HEIGHT, 0.2F)
                     .attr(Attribute.MARGIN, 0.11F)
-                    .attr("style", "rounded,filled");
+                    .attr("style", "rounded,filled")
+                    .attr("tooltip", " ");
             Style scriptStyle = new Style()
                     .attr(Attribute.FONTNAME, "arial")
                     .attr(Attribute.FONTSIZE, 8f)
@@ -204,7 +210,8 @@ public class Runtime {
                     .attr(Attribute.SHAPE, Shape.RECTANGLE)
                     .attr(Attribute.HEIGHT, 0.2F)
                     .attr(Attribute.MARGIN, 0.11F)
-                    .attr("style", "filled");
+                    .attr("style", "filled")
+                    .attr("tooltip", " ");
             Graph graph;
             Graph currentSubGraph;
             List<Node> currentSources;
@@ -212,11 +219,23 @@ public class Runtime {
             @Override
             public void call(SourceUnit sourceUnit, GeneratorContext generatorContext, ClassNode classNode) throws CompilationFailedException {
                 final String scriptName = new ArrayDeque<>(Arrays.asList(sourceUnit.getName().split("/"))).removeLast().split("\\.")[0];
+                try {
+                    String html = PrettifyToHtml.parseAndConvert(readStream(sourceUnit.getSource().getURI().toURL().openStream()));
+                    HashMap<String,Object> vars = new HashMap<>();
+                    vars.put("title", scriptName);
+                    vars.put("content", html);
+                    vars.put("upDestination", scriptName);
+                    html = applyTemplate(vars);
+                    new File("target/graphs").mkdirs();
+                    Files.write(Paths.get("target/graphs/"+scriptName+"-source.html"), html.getBytes());
+                } catch(IOException e) {
+                    throw new RuntimeException();
+                }
                 MethodNode method = classNode.getDeclaredMethod("run", new Parameter[0]);
-                if(method == null) {
+                if (method == null) {
                     return;
                 }
-                currentDeclaration =null;
+                currentDeclaration = null;
                 previousNode = null;
                 nodes = new HashMap<>();
                 edgeLabels = new HashMap<>();
@@ -225,14 +244,16 @@ public class Runtime {
                 graph = new Graph()
                         .style(new Style().attr(Attribute.BGCOLOR, theme.background))
                         .nodeWith(nodeStyle)
-                        .edgeWith(edgeStyle);
-                if(overview == null) {
+                        .edgeWith(edgeStyle)
+                        .attr("tooltip", " ");
+                if (overview == null) {
                     overview = new Graph()
                             .style(new Style().attr(Attribute.BGCOLOR, theme.background))
                             .nodeWith(scriptStyle)
-                            .edgeWith(edgeStyle);
+                            .edgeWith(edgeStyle)
+                            .attr("tooltip", " ");
                 }
-                Map<String,Graph> otherGraphs = new HashMap<>();
+                Map<String, Graph> otherGraphs = new HashMap<>();
                 BlockStatement block = (BlockStatement) method.getCode();
                 block.visit(new CodeVisitorSupport() {
                     @Override
@@ -240,12 +261,13 @@ public class Runtime {
                         Expression right = expression.getRightExpression();
                         if (right instanceof StaticMethodCallExpression &&
                                 (((StaticMethodCallExpression) right).getMethod().equals("pipe") ||
-                                ((StaticMethodCallExpression) right).getMethod().equals("tube")) ||
+                                        ((StaticMethodCallExpression) right).getMethod().equals("tube")) ||
                                 right instanceof ClosureExpression) {
                             Variable var = expression.getVariableExpression().getAccessedVariable();
                             String id = objId(var);
                             String name = var.getName();
                             currentSubGraph = subGraph(id, name).attr(Attribute.RANKSEP, 10F);
+                            currentSubGraph.attr(Attribute.URL, sourceLink(expression, true));
                             currentDeclaration = expression;
                             graph.subGraph(currentSubGraph);
                             expression.getRightExpression().visit(this);
@@ -254,7 +276,7 @@ public class Runtime {
                                 currentSubGraph.attr(Attribute.LABEL, currentSubGraph.attr(Attribute.LABEL) + " *");
                                 currentSubGraph.attr(Attribute.STYLE, StyleAttr.BOLD);
                             }
-                            if(right instanceof StaticMethodCallExpression && ((StaticMethodCallExpression) right).getMethod().equals("tube")) {
+                            if (right instanceof StaticMethodCallExpression && ((StaticMethodCallExpression) right).getMethod().equals("tube")) {
                                 currentSubGraph.attr(Attribute.STYLE, StyleAttr.ROUNDED);
                             }
                             currentSubGraph = null;
@@ -266,7 +288,7 @@ public class Runtime {
                                     ((ArgumentListExpression) expression.getLeftExpression()).getExpressions();
                             StringBuilder label = new StringBuilder();
                             String method = ((StaticMethodCallExpression) right).getMethod();
-                            if(!method.startsWith("from")) {
+                            if (!method.startsWith("from")) {
                                 label.append(method);
                             }
                             ArgumentListExpression args = ((ArgumentListExpression) (((StaticMethodCallExpression) right).getArguments()));
@@ -275,7 +297,7 @@ public class Runtime {
                                     new CodeVisitorSupport() {
                                         @Override
                                         public void visitStaticMethodCallExpression(StaticMethodCallExpression call) {
-                                            if(!commonMethods.contains(call.getMethodAsString())) {
+                                            if (!commonMethods.contains(call.getMethodAsString())) {
                                                 label.append(" ").append(statics(call.getMethodAsString()));
                                             }
                                             call.getArguments().visit(this);
@@ -294,12 +316,17 @@ public class Runtime {
                                         }
                                     });
                             node.attr(Attribute.LABEL, label.toString()).attr(Attribute.FONTNAME, "arial");
+                            node.attr(Attribute.URL, sourceLink(expression, false));
                             graph.node(node);
                             vars.forEach(var -> {
                                 nodes.put(((VariableExpression) var).getAccessedVariable(), node);
                                 edgeLabels.put(((VariableExpression) var).getAccessedVariable(), ((VariableExpression) var).getAccessedVariable().getName());
                             });
                         }
+                    }
+
+                    private String sourceLink(Expression expression, boolean multiline) {
+                        return scriptName+"-source.html#"+expression.getLineNumber()+(multiline ? "-"+expression.getLastLineNumber(): "");
                     }
 
                     private List<String> commonMethods =
@@ -313,7 +340,7 @@ public class Runtime {
                             boolean isCommon = commonMethods.contains(method);
                             boolean isTo = (method.equals("to") || method.equals("transform") || method.equals("compose")) &&
                                     VariableExpression.class.isAssignableFrom(
-                                            ((ArgumentListExpression)call.getArguments()).getExpression(0).getClass());
+                                            ((ArgumentListExpression) call.getArguments()).getExpression(0).getClass());
                             StringBuilder label = new StringBuilder(isCommon || isTo ? "" : call.getMethodAsString());
                             List<Node> peers = new ArrayList<>();
                             Node node = new Node();
@@ -321,7 +348,7 @@ public class Runtime {
                                     new CodeVisitorSupport() {
                                         @Override
                                         public void visitStaticMethodCallExpression(StaticMethodCallExpression call) {
-                                            if(!commonMethods.contains(call.getMethodAsString())) {
+                                            if (!commonMethods.contains(call.getMethodAsString())) {
                                                 label.append(" ").append(statics(call.getMethodAsString()));
                                             }
                                             call.getArguments().visit(this);
@@ -350,6 +377,7 @@ public class Runtime {
                                         }
                                     });
                             node.attr(Attribute.LABEL, html(label.toString().trim()));
+                            node.attr(Attribute.URL, sourceLink(call.getMethod(), false));
                             if (isTo && peers.size() > 0) {
                                 node.attr(Attribute.STYLE, StyleAttr.ROUNDED)
                                         .attr(Attribute.FONTCOLOR, theme.box);
@@ -375,7 +403,7 @@ public class Runtime {
                             }
                             previousNode = node;
                             call.getObjectExpression().visit(this);
-                        } else if(call.getMethodAsString().equals("to")) {
+                        } else if (call.getMethodAsString().equals("to")) {
                             Node[] src = new Node[1];
                             call.getObjectExpression().visit(new CodeVisitorSupport() {
                                 @Override
@@ -386,27 +414,29 @@ public class Runtime {
                             call.getArguments().visit(new CodeVisitorSupport() {
                                 @Override
                                 public void visitPropertyExpression(PropertyExpression expression) {
-                                    if(expression.getObjectExpression() instanceof PropertyExpression) {
+                                    if (expression.getObjectExpression() instanceof PropertyExpression) {
                                         String name = expression.getProperty().getText();
-                                        PropertyExpression exp = (PropertyExpression)expression.getObjectExpression();
+                                        PropertyExpression exp = (PropertyExpression) expression.getObjectExpression();
                                         Expression obj = exp.getObjectExpression();
-                                        if(obj instanceof ClassExpression) {
+                                        if (obj instanceof ClassExpression) {
                                             Expression prop = exp.getProperty();
                                             Graph otherGraph = otherGraphs.get(prop.getText());
-                                            if(otherGraph == null) {
+                                            if (otherGraph == null) {
                                                 otherGraph = subGraph(prop.getText(), prop.getText());
                                                 otherGraph.attr(Attribute.STYLE, StyleAttr.DASHED);
+                                                otherGraph.attr(Attribute.URL, makeUrl(prop.getText()));
                                                 graph.subGraph(otherGraph);
                                                 otherGraphs.put(prop.getText(), otherGraph);
                                             }
-                                            String id = (exp.getText()+"."+name).replace(".", "_");
+                                            String id = (exp.getText() + "." + name).replace(".", "_");
                                             Node target = new Node().id(id)
                                                     .attr(Attribute.LABEL, name);
+                                            target.attr(Attribute.URL, sourceLink(expression, false));
                                             otherGraph.node(target);
-                                            if(src[0] != null) {
+                                            if (src[0] != null) {
                                                 graph.edge(src[0], target);
                                             }
-                                            if(exp.getProperty() instanceof ConstantExpression) {
+                                            if (exp.getProperty() instanceof ConstantExpression) {
                                                 String otherScript = exp.getProperty().getText();
                                                 String tgtName = otherScript + "_" + name;
                                                 junctions.put(tgtName, scriptName);
@@ -422,7 +452,7 @@ public class Runtime {
                     }
 
                     private void linkToPrevious(Node source) {
-                        if(previousNode != null) {
+                        if (previousNode != null) {
                             Edge edge = edge(source, previousNode);
                             graph.edge(edge);
                         } else {
@@ -431,32 +461,38 @@ public class Runtime {
                     }
 
                     private void visitPropertyExpressionInternal(PropertyExpression expression, List<Node> sources, GroovyCodeVisitor visitor) {
-                        if(expression.getObjectExpression() instanceof PropertyExpression) {
+                        if (expression.getObjectExpression() instanceof PropertyExpression) {
                             String name = expression.getProperty().getText();
-                            PropertyExpression exp = (PropertyExpression)expression.getObjectExpression();
+                            PropertyExpression exp = (PropertyExpression) expression.getObjectExpression();
                             Expression obj = exp.getObjectExpression();
-                            if(obj instanceof ClassExpression) {
+                            if (obj instanceof ClassExpression) {
                                 Expression prop = exp.getProperty();
                                 Graph sourceGraph = otherGraphs.get(prop.getText());
-                                if(sourceGraph == null) {
+                                if (sourceGraph == null) {
                                     sourceGraph = subGraph(prop.getText(), prop.getText());
                                     sourceGraph.attr(Attribute.STYLE, StyleAttr.DASHED);
+                                    if(!prop.getText().equals("exports")) {
+                                        sourceGraph.attr(Attribute.URL, makeUrl(prop.getText()));
+                                    } else {
+                                        sourceGraph.attr(Attribute.LABEL, "["+sourceGraph.attr(Attribute.LABEL)+"]");
+                                    }
                                     graph.subGraph(sourceGraph);
                                     otherGraphs.put(prop.getText(), sourceGraph);
                                 }
-                                String id = (exp.getText()+"."+name).replace(".", "_");
+                                String id = (exp.getText() + "." + name).replace(".", "_");
                                 Node source = new Node().id(id)
                                         .attr(Attribute.LABEL, name);
-                                if(sources != null) {
+                                source.attr(Attribute.URL, sourceLink(expression, false));
+                                if (sources != null) {
                                     sources.add(source);
                                 } else {
                                     linkToPrevious(source);
                                 }
                                 sourceGraph.node(source);
-                                if(exp.getProperty() instanceof ConstantExpression) {
+                                if (exp.getProperty() instanceof ConstantExpression) {
                                     String src;
-                                    if(exp.getProperty().getText().equals("exports")) {
-                                        src = junctions.get(scriptName+"_"+name);
+                                    if (exp.getProperty().getText().equals("exports")) {
+                                        src = junctions.get(scriptName + "_" + name);
                                     } else {
                                         src = exp.getProperty().getText();
                                     }
@@ -479,13 +515,13 @@ public class Runtime {
                                         public void visitStaticMethodCallExpression(StaticMethodCallExpression call) {
                                             List<Node> sources = new ArrayList<>();
                                             StringBuilder label = new StringBuilder();
-                                            if(!commonMethods.contains(call.getMethodAsString())) {
+                                            if (!commonMethods.contains(call.getMethodAsString())) {
                                                 label.append(html(statics(call.getMethodAsString())));
                                             }
                                             call.getArguments().visit(new CodeVisitorSupport() {
                                                 @Override
                                                 public void visitStaticMethodCallExpression(StaticMethodCallExpression call) {
-                                                    if(!commonMethods.contains(call.getMethodAsString())) {
+                                                    if (!commonMethods.contains(call.getMethodAsString())) {
                                                         label.append(" ").append(statics(call.getMethodAsString()));
                                                     }
                                                     call.getArguments().visit(this);
@@ -503,7 +539,7 @@ public class Runtime {
 
                                                 @Override
                                                 public void visitConstantExpression(ConstantExpression expression) {
-                                                    if(!expression.getValue().toString().equals("exports")) {
+                                                    if (!expression.getValue().toString().equals("exports")) {
                                                         label.append(" ")
                                                                 .append(statics(expression.getValue().toString()));
                                                     }
@@ -511,7 +547,9 @@ public class Runtime {
                                             });
                                             node[0] = new Node()
                                                     .attr(Attribute.LABEL, label.toString())
-                                                    .attr(Attribute.FONTNAME, "arial");
+                                                    .attr(Attribute.FONTNAME, "arial")
+                                                    .attr(Attribute.URL, sourceLink(call, false));
+
                                             if (sources.size() == 0) {
                                                 if (!nodes.containsKey(call.getText())) {
                                                     nodes.put(call.getText(), node[0]);
@@ -522,8 +560,8 @@ public class Runtime {
                                                 AtomicInteger i = new AtomicInteger();
                                                 sources.forEach(source -> {
                                                     Edge edge = edge(source, node[0]);
-                                                    if(call.getMethod().equals("concat")) {
-                                                        edge.attr(Attribute.LABEL, ""+i.incrementAndGet());
+                                                    if (call.getMethod().equals("concat")) {
+                                                        edge.attr(Attribute.LABEL, "" + i.incrementAndGet());
                                                     }
                                                     graph.edge(edge);
                                                 });
@@ -543,7 +581,8 @@ public class Runtime {
                                         @Override
                                         public void visitConstantExpression(ConstantExpression expression) {
                                             Node source = new Node()
-                                                    .attr(Attribute.LABEL, expression.getText());
+                                                    .attr(Attribute.LABEL, expression.getText())
+                                                    .attr(Attribute.URL, sourceLink(expression, false));
                                             graph.node(source);
                                             linkToPrevious(source);
                                         }
@@ -551,13 +590,13 @@ public class Runtime {
                                         @Override
                                         public void visitVariableExpression(VariableExpression expression) {
                                             if (!expression.getAccessedVariable().getName().equals("it")) {
-                                                if(previousNode != null) {
+                                                if (previousNode != null) {
                                                     Edge edge = edge(nodes.get(expression.getAccessedVariable()), previousNode);
                                                     Optional.ofNullable(edgeLabels.get(expression.getAccessedVariable())).map(label -> edge.attr(Attribute.LABEL, label));
                                                     graph.edge(edge);
-                                                } else{
+                                                } else {
                                                     Node source = nodes.get(expression.getAccessedVariable());
-                                                    if(node != null) {
+                                                    if (node != null) {
                                                         nodes.putIfAbsent(currentDeclaration.getVariableExpression(), source);
                                                     }
                                                 }
@@ -575,7 +614,8 @@ public class Runtime {
                                     .attr(Attribute.SHAPE, Shape.CIRCLE)
                                     .attr(Attribute.WIDTH, 0.2F)
                                     .attr(Attribute.FIXEDSIZE, true)
-                                    .attr(Attribute.LABEL, "");
+                                    .attr(Attribute.LABEL, "")
+                                    .attr(Attribute.URL, sourceLink(call, true));
                             graph.node(target);
                             Edge[] edge = new Edge[1];
                             call.getArguments().visit(
@@ -615,7 +655,7 @@ public class Runtime {
 
                     @Override
                     public void visitBinaryExpression(BinaryExpression expression) {
-                        if(expression.getOperation().getText().equals("=")) {
+                        if (expression.getOperation().getText().equals("=")) {
                             expression.getRightExpression().visit(new CodeVisitorSupport() {
                                 @Override
                                 public void visitVariableExpression(VariableExpression expression) {
@@ -624,7 +664,8 @@ public class Runtime {
                                             .attr(Attribute.STYLE, StyleAttr.SOLID)
                                             .attr(Attribute.WIDTH, 0.2F)
                                             .attr(Attribute.FIXEDSIZE, true)
-                                            .attr(Attribute.LABEL, "");
+                                            .attr(Attribute.LABEL, "-")
+                                            .attr(Attribute.URL, sourceLink(expression, false));
                                     graph.node(target);
                                     graph.edge(edge(nodes.get(expression.getAccessedVariable()), target));
                                 }
@@ -657,35 +698,35 @@ public class Runtime {
             }
 
             private Edge edge(Node from, Node to) {
-                if(to==null) {
+                if (to == null) {
                     to = new Node().id("unknown");
                 }
-                if(from==null) {
+                if (from == null) {
                     from = new Node().id("unknown");
                 }
                 return new Edge(from, to);
             }
 
             private Node end = new Node()
-                            .attr(Attribute.SHAPE, Shape.CIRCLE)
-                            .attr(Attribute.WIDTH, 0.2F)
-                            .attr(Attribute.FIXEDSIZE, true)
-                            .attr(Attribute.LABEL, "")
-                            .attr(Attribute.STYLE, StyleAttr.SOLID);
+                    .attr(Attribute.SHAPE, Shape.CIRCLE)
+                    .attr(Attribute.WIDTH, 0.2F)
+                    .attr(Attribute.FIXEDSIZE, true)
+                    .attr(Attribute.LABEL, "")
+                    .attr(Attribute.STYLE, StyleAttr.FILLED);
 
             private void scriptEdge(String from, String to, String label) {
-                scriptNodes.putIfAbsent(from, new Node().id(from).attr(Attribute.URL, "index.html#"+from));
+                scriptNodes.putIfAbsent(from, new Node().id(from).attr(Attribute.URL, makeUrl(from)));
                 Node target;
-                if(to == null) {
+                if (to == null) {
                     to = "<<<END>>>";
                     target = end;
                 } else {
-                    target = new Node().id(to).attr(Attribute.URL, to+".svg");
+                    target = new Node().id(to).attr(Attribute.URL, makeUrl(to));
                 }
                 scriptNodes.putIfAbsent(to, target);
-                scriptEdges.putIfAbsent(from+"_"+to, new Edge(scriptNodes.get(from), scriptNodes.get(to)));
-                Edge edge = scriptEdges.get(from+"_"+to);
-                if(edge.attr(Attribute.LABEL) == null || !edge.attr(Attribute.LABEL).matches(".*(\\\\l)?"+label+"\\\\?.*")) {
+                scriptEdges.putIfAbsent(from + "_" + to, new Edge(scriptNodes.get(from), scriptNodes.get(to)));
+                Edge edge = scriptEdges.get(from + "_" + to);
+                if (edge.attr(Attribute.LABEL) == null || !edge.attr(Attribute.LABEL).matches(".*(\\\\l)?" + label + "\\\\?.*")) {
                     edge.attr(Attribute.LABEL, (edge.attr(Attribute.LABEL) != null ? edge.attr(Attribute.LABEL) + "\\l" : "") + label.trim());
                 }
             }
@@ -712,6 +753,12 @@ public class Runtime {
         };
     }
 
+    private String makeUrl(String script) {
+        return script + ".html";
+    }
+
+    private Pattern svgSizePattern = Pattern.compile("<svg width=\"([0-9]+)pt\" height=\"([0-9]+)pt\"");
+
     private void createGraph(Graph graph, String name, String type, OutputStream output) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         graph.writeTo(out);
@@ -720,9 +767,29 @@ public class Runtime {
         dir.mkdirs();
         g = g.scale(1f);
         if (type == null) {
-            g.renderToFile(new File(dir, name+".png"));
+            g.renderToFile(new File(dir, name + ".png"));
             try {
-                Files.write(Paths.get(dir+"/"+name+".svg"), g.createSvg().getBytes(Charset.forName("UTF8")));
+                String svg = g.createSvg();
+                Matcher matcher = svgSizePattern.matcher(svg);
+                int ratio = 2;
+                matcher.find();
+                int width = ratio*Integer.parseInt(matcher.group(1));
+                int height = ratio*Integer.parseInt(matcher.group(2));
+                svg = matcher.replaceAll("<svg width=\""+width+"pt\" height=\""+height+"\"pt\"");
+                Files.write(Paths.get(dir + "/" + name + ".svg"), svg.getBytes(Charset.forName("UTF8")));
+                String title = name;
+                String upDestination = null;
+                if(title.equals("overview")) {
+                    title = "Overview";
+                } else {
+                    upDestination = "overview";
+                }
+                Map<String,Object> vars = new HashMap<>();
+                vars.put("title", title);
+                vars.put("upDestination", upDestination);
+                vars.put("content", svg);
+                String html = applyTemplate(vars);
+                Files.write(Paths.get(dir + "/" + name + ".html"), html.getBytes("UTF-8"));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -745,5 +812,16 @@ public class Runtime {
                 }
             }
         }
+    }
+
+    private String applyTemplate(Map<String, Object> vars) throws IOException {
+        return new Engine().transform(readStream(getClass().getResourceAsStream("/plumber-template.html")), vars);
+    }
+
+    public static String readStream(InputStream in) throws IOException {
+        byte[] buf = new byte[in.available()];
+        int read;
+        for(int total = 0; (read = in.read(buf, total, Math.min(100000, buf.length - total))) > 0; total += read);
+        return new String(buf, "utf-8");
     }
 }
