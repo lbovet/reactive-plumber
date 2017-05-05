@@ -196,6 +196,15 @@ public class Runtime {
                     .attr(Attribute.HEIGHT, 0.2F)
                     .attr(Attribute.MARGIN, 0.11F)
                     .attr("style", "rounded,filled");
+            Style scriptStyle = new Style()
+                    .attr(Attribute.FONTNAME, "arial")
+                    .attr(Attribute.FONTSIZE, 8f)
+                    .attr(Attribute.COLOR, theme.box)
+                    .attr(Attribute.SHAPE, Shape.RECTANGLE)
+                    .attr(Attribute.HEIGHT, 0.2F)
+                    .attr(Attribute.MARGIN, 0.11F)
+                    .attr(Attribute.FONTCOLOR, theme.box)
+                    .attr(Attribute.STYLE, StyleAttr.DASHED);
             Graph graph;
             Graph currentSubGraph;
             List<Node> currentSources;
@@ -220,8 +229,7 @@ public class Runtime {
                 if(overview == null) {
                     overview = new Graph()
                             .style(new Style().attr(Attribute.BGCOLOR, theme.background))
-                            .attr(Attribute.STYLE, StyleAttr.DASHED)
-                            .nodeWith(nodeStyle)
+                            .nodeWith(scriptStyle)
                             .edgeWith(edgeStyle);
                 }
                 Map<String,Graph> otherGraphs = new HashMap<>();
@@ -662,15 +670,17 @@ public class Runtime {
                             .attr(Attribute.SHAPE, Shape.CIRCLE)
                             .attr(Attribute.WIDTH, 0.2F)
                             .attr(Attribute.FIXEDSIZE, true)
-                            .attr(Attribute.LABEL, "");
+                            .attr(Attribute.LABEL, "")
+                            .attr(Attribute.STYLE, StyleAttr.SOLID);
+
             private void scriptEdge(String from, String to, String label) {
-                scriptNodes.putIfAbsent(from, new Node().id(from));
+                scriptNodes.putIfAbsent(from, new Node().id(from).attr(Attribute.URL, "index.html#"+from));
                 Node target;
                 if(to == null) {
                     to = "<<<END>>>";
                     target = end;
                 } else {
-                    target = new Node().id(to);
+                    target = new Node().id(to).attr(Attribute.URL, to+".svg");
                 }
                 scriptNodes.putIfAbsent(to, target);
                 scriptEdges.putIfAbsent(from+"_"+to, new Edge(scriptNodes.get(from), scriptNodes.get(to)));
