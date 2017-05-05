@@ -1,5 +1,7 @@
 # Reactive Plumber
 
+[![Join the chat at https://gitter.im/reactive-plumber/Lobby](https://badges.gitter.im/reactive-plumber/Lobby.svg)](https://gitter.im/reactive-plumber/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 <p align='right'>A <a href="http://www.swisspush.org">swisspush</a> project <a href="http://www.swisspush.org" border=0><img align="top"  src='https://1.gravatar.com/avatar/cf7292487846085732baf808def5685a?s=32'></a></p>
 
 <p align='center'><img src='https://cloud.githubusercontent.com/assets/692124/24085590/15efacf4-0cff-11e7-8b31-451e4d64902a.png' /></p>
