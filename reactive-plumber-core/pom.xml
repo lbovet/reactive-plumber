@@ -26,6 +26,12 @@
             <groupId>com.github.twalcari</groupId>
             <artifactId>java-prettify</artifactId>
             <version>2.0.2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.fxmisc.richtext</groupId>
+                    <artifactId>richtextfx</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.floreysoft</groupId>
