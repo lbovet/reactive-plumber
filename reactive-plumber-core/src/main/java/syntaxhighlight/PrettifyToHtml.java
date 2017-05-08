@@ -66,7 +66,7 @@ public class PrettifyToHtml {
         sb.append("</div>");
         return sb.toString()
                 .replace("\n", "</div><div class=\"line\">")
-                .replace("<div class=\"line\"></div>", "\n");
+                .replace("<div class=\"line\"></div>", "<div class=\"line\">&#8203;</div>");
     }
 
     public static String toCss(Theme theme) {
