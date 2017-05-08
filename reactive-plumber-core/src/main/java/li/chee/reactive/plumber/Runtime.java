@@ -35,6 +35,8 @@ import static java.awt.Color.*;
  */
 public class Runtime {
 
+    public static final String OVERVIEW = "overview";
+
     public enum GraphTheme {
         LIGHT(WHITE, GRAY, DARK_GRAY, WHITE),
         DARK(DARK_GRAY, GRAY, LIGHT_GRAY, BLACK);
@@ -54,11 +56,12 @@ public class Runtime {
     private Graph overview = null;
     private Map<String, Node> scriptNodes = new HashMap<>();
     private Map<String, Edge> scriptEdges = new HashMap<>();
-    private Map<String, String> junctions = new HashMap<>();
 
     private GroovyShell shell;
     private GraphTheme theme = GraphTheme.DARK;
     private String graphOutputDir = "target/graphs";
+    private String graphType = "html";
+    private String graphOverviewTitle = "Overview";
 
     private boolean hideToLinks = true;
 
@@ -68,6 +71,14 @@ public class Runtime {
 
     public void setGraphOutputDir(String graphOutputDir) {
         this.graphOutputDir = graphOutputDir;
+    }
+
+    public void setGraphType(String graphType) {
+        this.graphType = graphType;
+    }
+
+    public void setGraphOverviewTitle(String graphOverviewTitle) {
+        this.graphOverviewTitle = graphOverviewTitle;
     }
 
     public void setGraphShowToLinks(boolean showToLinks) {
@@ -87,6 +98,16 @@ public class Runtime {
 
     public Runtime withGraphOutputDir(String dir) {
         setGraphOutputDir(dir);
+        return this;
+    }
+
+    public Runtime withGraphType(String type) {
+        setGraphType(type);
+        return this;
+    }
+
+    public Runtime withGraphOverviewTitle(String graphOverviewTitle) {
+        this.graphOverviewTitle = graphOverviewTitle;
         return this;
     }
 
@@ -136,7 +157,7 @@ public class Runtime {
         if (overview != null) {
             scriptNodes.values().forEach(node -> overview.node(node));
             scriptEdges.values().forEach(edge -> overview.edge(edge));
-            createGraph(overview, "overview", type, output);
+            createGraph(overview, OVERVIEW, type, output);
         }
         return this;
     }
@@ -221,17 +242,17 @@ public class Runtime {
                 final String scriptName = new ArrayDeque<>(Arrays.asList(sourceUnit.getName().split("/"))).removeLast().split("\\.")[0];
                 try {
                     URI uri = sourceUnit.getSource().getURI();
-                    if(!uri.getScheme().equals("data")) {
+                    if (!uri.getScheme().equals("data")) {
                         String html = PrettifyToHtml.parseAndConvert(readStream(uri.toURL().openStream()));
                         HashMap<String, Object> vars = new HashMap<>();
                         vars.put("title", scriptName);
                         vars.put("content", html);
                         vars.put("upDestination", scriptName);
                         html = applyTemplate(vars);
-                        new File("target/graphs").mkdirs();
-                        Files.write(Paths.get("target/graphs/" + scriptName + "-source.html"), html.getBytes());
+                        new File(graphOutputDir).mkdirs();
+                        Files.write(Paths.get(graphOutputDir+"/" + scriptName + "-source.html"), html.getBytes());
                     }
-                } catch(IOException e) {
+                } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
                 MethodNode method = classNode.getDeclaredMethod("run", new Parameter[0]);
@@ -329,7 +350,7 @@ public class Runtime {
                     }
 
                     private String sourceLink(Expression expression, boolean multiline) {
-                        return scriptName+"-source.html#"+expression.getLineNumber()+(multiline ? "-"+expression.getLastLineNumber(): "");
+                        return scriptName + "-source.html#" + expression.getLineNumber() + (multiline ? "-" + expression.getLastLineNumber() : "");
                     }
 
                     private List<String> commonMethods =
@@ -441,8 +462,7 @@ public class Runtime {
                                             }
                                             if (exp.getProperty() instanceof ConstantExpression) {
                                                 String otherScript = exp.getProperty().getText();
-                                                String tgtName = otherScript + "_" + name;
-                                                junctions.put(tgtName, scriptName);
+                                                scriptEdge(scriptName, otherScript, name);
                                             }
                                         }
                                     } else {
@@ -474,10 +494,10 @@ public class Runtime {
                                 if (sourceGraph == null) {
                                     sourceGraph = subGraph(prop.getText(), prop.getText());
                                     sourceGraph.attr(Attribute.STYLE, StyleAttr.DASHED);
-                                    if(!prop.getText().equals("exports")) {
+                                    if (!prop.getText().equals("exports")) {
                                         sourceGraph.attr(Attribute.URL, makeUrl(prop.getText()));
                                     } else {
-                                        sourceGraph.attr(Attribute.LABEL, "["+sourceGraph.attr(Attribute.LABEL)+"]");
+                                        sourceGraph.attr(Attribute.LABEL, "[" + sourceGraph.attr(Attribute.LABEL) + "]");
                                     }
                                     graph.subGraph(sourceGraph);
                                     otherGraphs.put(prop.getText(), sourceGraph);
@@ -493,13 +513,9 @@ public class Runtime {
                                 }
                                 sourceGraph.node(source);
                                 if (exp.getProperty() instanceof ConstantExpression) {
-                                    String src;
-                                    if (exp.getProperty().getText().equals("exports")) {
-                                        src = junctions.get(scriptName + "_" + name);
-                                    } else {
-                                        src = exp.getProperty().getText();
+                                    if(!exp.getProperty().getText().equals("exports")) {
+                                        scriptEdge(exp.getProperty().getText(), scriptName, name);
                                     }
-                                    scriptEdge(src, scriptName, name);
                                 }
                             }
                         } else {
@@ -563,7 +579,7 @@ public class Runtime {
                                                 AtomicInteger i = new AtomicInteger();
                                                 sources.forEach(source -> {
                                                     Edge edge = edge(source, node[0]);
-                                                    if (call.getMethod().equals("concat")) {
+                                                    if (call.getMethod().equals("concat") && sources.size()>1) {
                                                         edge.attr(Attribute.LABEL, "" + i.incrementAndGet());
                                                     }
                                                     graph.edge(edge);
@@ -612,7 +628,6 @@ public class Runtime {
                                         }
                                     });
                         } else if (call.getMethodAsString().equals("drain")) {
-                            AtomicInteger count = new AtomicInteger();
                             Node target = new Node()
                                     .attr(Attribute.SHAPE, Shape.CIRCLE)
                                     .attr(Attribute.WIDTH, 0.2F)
@@ -627,14 +642,10 @@ public class Runtime {
                                         public void visitVariableExpression(VariableExpression expression) {
                                             Node source = nodes.get(expression.getAccessedVariable());
                                             edge[0] = edge(source, target);
-                                            edge[0].attr(Attribute.LABEL, "" + count.incrementAndGet());
                                             graph.edge(edge[0]);
                                             scriptEdge(scriptName, null, expression.getAccessedVariable().getName());
                                         }
                                     });
-                            if (count.get() == 1) {
-                                edge[0].attr(Attribute.LABEL, "");
-                            }
                         } else if (call.getMethodAsString().equals("concurrent")) {
                             currentSubGraph.attr(Attribute.LABEL, "// " + currentSubGraph.attr(Attribute.LABEL));
                         } else if (call.getMethodAsString().equals("parallel")) {
@@ -763,58 +774,69 @@ public class Runtime {
     private Pattern svgSizePattern = Pattern.compile("<svg width=\"([0-9]+)pt\" height=\"([0-9]+)pt\"");
 
     private void createGraph(Graph graph, String name, String type, OutputStream output) {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        graph.writeTo(out);
-        Graphviz g = Graphviz.fromString(out.toString().replaceAll("\\r", ""));
-        File dir = new File(graphOutputDir);
-        dir.mkdirs();
-        g = g.scale(1f);
-        if (type == null) {
-            g.renderToFile(new File(dir, name + ".png"));
-            try {
-                String svg = g.createSvg();
-                Matcher matcher = svgSizePattern.matcher(svg);
-                int ratio = 2;
-                matcher.find();
-                int width = ratio*Integer.parseInt(matcher.group(1));
-                int height = ratio*Integer.parseInt(matcher.group(2));
-                svg = matcher.replaceAll("<svg width=\""+width+"pt\" height=\""+height+"\"pt\"");
-                Files.write(Paths.get(dir + "/" + name + ".svg"), svg.getBytes(Charset.forName("UTF8")));
-                String title = name;
-                String upDestination = null;
-                if(title.equals("overview")) {
-                    title = "Overview";
-                } else {
-                    upDestination = "overview";
-                }
-                Map<String,Object> vars = new HashMap<>();
-                vars.put("title", title);
-                vars.put("upDestination", upDestination);
-                vars.put("content", svg);
-                String html = applyTemplate(vars);
-                Files.write(Paths.get(dir + "/" + name + ".html"), html.getBytes("UTF-8"));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            graph.writeTo(out);
+            Graphviz g = Graphviz.fromString(out.toString().replaceAll("\\r", ""));
+            File f;
+            g = g.scale(1f);
+            if (type == null) {
+                type = graphType;
             }
-        } else {
-            if ("svg".equals(type)) {
-                try {
-                    output.write(g.createSvg().getBytes(Charset.forName("UTF8")));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+            if (output != null) {
+                f = File.createTempFile("tmp", "." + type);
+                f.deleteOnExit();
             } else {
-                try {
-                    File f = File.createTempFile("tmp", "." + type);
-                    g.renderToFile(f);
-                    Files.copy(f.toPath(), output);
-                    f.delete();
-                    f.deleteOnExit();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                File dir = new File(graphOutputDir);
+                dir.mkdirs();
+                f = new File(dir, name + "." + type);
             }
+            switch (type) {
+                case "svg":
+                    if (output != null) {
+                        output.write(createSvg(g).getBytes(Charset.forName("UTF8")));
+                        return;
+                    } else {
+                        Files.write(f.toPath(), createSvg(g).getBytes(Charset.forName("UTF8")));
+                    }
+                    break;
+                case "html":
+                    String svg = createSvg(g);
+                    String title = name;
+                    String upDestination = null;
+                    if (name.equals(OVERVIEW)) {
+                        title = graphOverviewTitle;
+                    } else {
+                        upDestination = OVERVIEW;
+                    }
+                    Map<String, Object> vars = new HashMap<>();
+                    vars.put("title", title);
+                    vars.put("upDestination", upDestination);
+                    vars.put("content", svg);
+                    String html = applyTemplate(vars);
+                    Files.write(f.toPath(), html.getBytes("UTF-8"));
+                    break;
+                default:
+                    g.renderToFile(f);
+                    break;
+            }
+            if(output != null) {
+                Files.copy(f.toPath(), output);
+                f.delete();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
+    }
+
+    private String createSvg(Graphviz g) {
+        String svg = g.createSvg();
+        Matcher matcher = svgSizePattern.matcher(svg);
+        int ratio = 2;
+        matcher.find();
+        int width = ratio * Integer.parseInt(matcher.group(1));
+        int height = ratio * Integer.parseInt(matcher.group(2));
+        return matcher.replaceAll("<svg width=\"" + width + "pt\" height=\"" + height + "\"pt\"");
     }
 
     private String applyTemplate(Map<String, Object> vars) throws IOException {
@@ -824,7 +846,7 @@ public class Runtime {
     public static String readStream(InputStream in) throws IOException {
         byte[] buf = new byte[in.available()];
         int read;
-        for(int total = 0; (read = in.read(buf, total, Math.min(100000, buf.length - total))) > 0; total += read);
+        for (int total = 0; (read = in.read(buf, total, Math.min(100000, buf.length - total))) > 0; total += read) ;
         return new String(buf, "utf-8");
     }
 }

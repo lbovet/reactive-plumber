@@ -64,4 +64,14 @@ public class GraphTest {
         new Runtime().withGraphTheme(Runtime.GraphTheme.LIGHT).generateGraph(new String(Files.readAllBytes(Paths.get(ROOT+"/four/first/first.groovy"))), new File("target/four-first.png"));
         new Runtime().withGraphTheme(Runtime.GraphTheme.LIGHT).generateGraph(new String(Files.readAllBytes(Paths.get(ROOT+"/four/second/second.groovy"))), new File("target/four-second.png"));
     }
+
+    @Test
+    public void graphGenAll() throws IOException {
+        GraphGen.generateGraphs(ROOT+"/four/", "Four", "html", false, "target/test-graphs");
+    }
+
+    @Test
+    public void graphGenOne() throws IOException {
+        GraphGen.generateGraphs(ROOT+"/four/first/first.groovy", "png", true);
+    }
 }

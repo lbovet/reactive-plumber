@@ -49,5 +49,50 @@
             <version>1.2.2</version>
         </dependency>
     </dependencies>
-
+    <profiles>
+        <profile>
+            <id>graphs</id>
+            <build>
+                <defaultGoal>compile</defaultGoal>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.gmavenplus</groupId>
+                        <artifactId>gmavenplus-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>execute</goal>
+                                </goals>
+                                <configuration>
+                                    <scripts>
+                                        <script><![CDATA[
+                                            import li.chee.reactive.plumber.GraphGen
+                                            GraphGen.generateGraphs("src/main/resources/examples/four", "Four", "target/apidocs/graphs")
+                                        ]]></script>
+                                    </scripts>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <scripts>
+                                <script><![CDATA[
+                                            import li.chee.reactive.plumber.GraphGen
+                                            GraphGen.generateGraphs("src/main/resources/examples/four", "png")
+                                        ]]></script>
+                            </scripts>
+                        </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.codehaus.groovy</groupId>
+                                <artifactId>groovy-all</artifactId>
+                                <version>2.4.8</version>
+                                <scope>runtime</scope>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
