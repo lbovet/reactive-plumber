@@ -53,33 +53,17 @@
         <profile>
             <id>graphs</id>
             <build>
-                <defaultGoal>compile</defaultGoal>
+                <defaultGoal>gplus:execute</defaultGoal>
                 <plugins>
                     <plugin>
                         <groupId>org.codehaus.gmavenplus</groupId>
                         <artifactId>gmavenplus-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>execute</goal>
-                                </goals>
-                                <configuration>
-                                    <scripts>
-                                        <script><![CDATA[
-                                            import li.chee.reactive.plumber.GraphGen
-                                            GraphGen.generateGraphs("src/main/resources/examples/four", "Four", "target/apidocs/graphs")
-                                        ]]></script>
-                                    </scripts>
-                                </configuration>
-                            </execution>
-                        </executions>
                         <configuration>
                             <scripts>
                                 <script><![CDATA[
-                                            import li.chee.reactive.plumber.GraphGen
-                                            GraphGen.generateGraphs("src/main/resources/examples/four", "png")
-                                        ]]></script>
+                                    import li.chee.reactive.plumber.GraphGen
+                                    GraphGen.generateGraphs("src/main/resources/examples/four", "Four", "target/apidocs/graphs")
+                                ]]></script>
                             </scripts>
                         </configuration>
                         <dependencies>
