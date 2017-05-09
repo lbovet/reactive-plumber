@@ -242,7 +242,7 @@ public class Runtime {
                 final String scriptName = new ArrayDeque<>(Arrays.asList(sourceUnit.getName().split("/"))).removeLast().split("\\.")[0];
                 try {
                     URI uri = sourceUnit.getSource().getURI();
-                    if (!uri.getScheme().equals("data")) {
+                    if (!uri.getScheme().equals("data") && graphType.equals("html")) {
                         String html = PrettifyToHtml.parseAndConvert(readStream(uri.toURL().openStream()));
                         HashMap<String, Object> vars = new HashMap<>();
                         vars.put("title", scriptName);
