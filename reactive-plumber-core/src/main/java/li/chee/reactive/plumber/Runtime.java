@@ -283,29 +283,9 @@ public class Runtime {
                     @Override
                     public void visitDeclarationExpression(DeclarationExpression expression) {
                         Expression right = expression.getRightExpression();
-                        if (right instanceof StaticMethodCallExpression &&
-                                (((StaticMethodCallExpression) right).getMethod().equals("pipe") ||
-                                        ((StaticMethodCallExpression) right).getMethod().equals("tube")) ||
-                                right instanceof ClosureExpression) {
-                            Variable var = expression.getVariableExpression().getAccessedVariable();
-                            String id = objId(var);
-                            String name = var.getName();
-                            currentSubGraph = subGraph(id, name).attr(Attribute.RANKSEP, 10F);
-                            currentSubGraph.attr(Attribute.URL, sourceLink(expression, true));
-                            currentDeclaration = expression;
-                            graph.subGraph(currentSubGraph);
-                            expression.getRightExpression().visit(this);
-                            currentSources.forEach(source -> graph.edge(edge(source, previousNode)));
-                            if (currentSources.size() > 0) {
-                                currentSubGraph.attr(Attribute.LABEL, currentSubGraph.attr(Attribute.LABEL) + " *");
-                                currentSubGraph.attr(Attribute.STYLE, StyleAttr.BOLD);
-                            }
-                            if (right instanceof StaticMethodCallExpression && ((StaticMethodCallExpression) right).getMethod().equals("tube")) {
-                                currentSubGraph.attr(Attribute.STYLE, StyleAttr.ROUNDED);
-                            }
-                            currentSubGraph = null;
-                            previousNode = null;
-                            currentSources.clear();
+                        currentDeclaration = expression;
+                        if (right instanceof ClosureExpression) {
+                            processBlock(right, null);
                         } else if (right instanceof StaticMethodCallExpression &&
                                 expression.getLeftExpression() instanceof ArgumentListExpression) {
                             List<Expression> vars =
@@ -346,7 +326,30 @@ public class Runtime {
                                 nodes.put(((VariableExpression) var).getAccessedVariable(), node);
                                 edgeLabels.put(((VariableExpression) var).getAccessedVariable(), ((VariableExpression) var).getAccessedVariable().getName());
                             });
+                        } else if (right instanceof StaticMethodCallExpression) {
+                            right.visit(this);
                         }
+                    }
+
+                    private void processBlock(Expression exp, String type) {
+                        Variable var = currentDeclaration.getVariableExpression().getAccessedVariable();
+                        String id = objId(var);
+                        String name = var.getName();
+                        currentSubGraph = subGraph(id, name).attr(Attribute.RANKSEP, 10F);
+                        currentSubGraph.attr(Attribute.URL, sourceLink(currentDeclaration, true));
+                        graph.subGraph(currentSubGraph);
+                        exp.visit(this);
+                        currentSources.forEach(source -> graph.edge(edge(source, previousNode)));
+                        if (currentSources.size() > 0) {
+                            currentSubGraph.attr(Attribute.LABEL, currentSubGraph.attr(Attribute.LABEL) + " *");
+                            currentSubGraph.attr(Attribute.STYLE, StyleAttr.BOLD);
+                        }
+                        if ("tube".equals(type)) {
+                            currentSubGraph.attr(Attribute.STYLE, StyleAttr.ROUNDED);
+                        }
+                        currentSubGraph = null;
+                        previousNode = null;
+                        currentSources.clear();
                     }
 
                     private String sourceLink(Expression expression, boolean multiline) {
@@ -355,7 +358,7 @@ public class Runtime {
 
                     private List<String> commonMethods =
                             Arrays.asList("map", "flatMap", "flatMapIterable", "flatMapSequential", "concatMap",
-                                    "doOnNext", "compose", "doOnSuccess", "to", "transform", "zipWith", "value");
+                                    "doOnNext", "compose", "doOnSuccess", "to", "transform", "value");
 
                     @Override
                     public void visitMethodCallExpression(MethodCallExpression call) {
@@ -526,7 +529,10 @@ public class Runtime {
 
                     @Override
                     public void visitStaticMethodCallExpression(StaticMethodCallExpression call) {
-                        if (currentSubGraph != null && call.getMethodAsString().startsWith("from")) {
+                        if(call.getMethod().equals("pipe") || call.getMethod().equals("tube")) {
+                            processBlock(call.getArguments(), call.getMethod());
+                            return;
+                        } else if (currentSubGraph != null && call.getMethodAsString().startsWith("from")) {
                             Node[] node = new Node[1];
                             call.getArguments().visit(
                                     new CodeVisitorSupport() {

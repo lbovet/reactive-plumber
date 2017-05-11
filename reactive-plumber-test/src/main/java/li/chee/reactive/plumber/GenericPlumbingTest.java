@@ -39,12 +39,12 @@ public class GenericPlumbingTest {
 
     @Test
     public void testRuntimeThree() throws IOException {
-        new Runtime(true).run(new String(Files.readAllBytes(Paths.get(ROOT+"/three/three.groovy"))));
+        new Runtime(true).withGraphType("png").run(new String(Files.readAllBytes(Paths.get(ROOT+"/three/three.groovy"))));
     }
 
     @Test
     public void testRuntimeFour() throws IOException, URISyntaxException {
-        new Runtime(true)
+        new Runtime(true).withGraphType("png")
                 .withGraphTheme(Runtime.GraphTheme.LIGHT)
                 .run(First.class.getResource("first.groovy").toURI())
                 .run(Second.class.getResource("second.groovy").toURI())

@@ -23,9 +23,9 @@ def statistics = pipe {
     doOnNext stats
 }
 
-def output = pipe {
+def outputd = pipe {
     from numbers \
     doOnNext display
 }
 
-drain output, statistics
+drain outputd, statistics
