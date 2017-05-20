@@ -18,7 +18,9 @@ public abstract class Plumbing extends Flux {
     private static List<ConnectableFlux<?>> connectables = new ArrayList<>();
 
     public static <T> Flux<T> value(Flux<T> f) {
-        return f.next().cache().repeat();
+        Mono<T> cached = f.next().cache();
+        cached.subscribe();
+        return cached.repeat();
     }
 
     public static <V> Consumer<V> show() {
