@@ -8,7 +8,9 @@ import reactor.core.scheduler.Schedulers;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -111,18 +113,20 @@ public abstract class Plumbing extends Flux {
     }
 
     public static void drain(Flux<?>... pipes) {
-        CountDownLatch latch = new CountDownLatch(1);
-        fromArray(pipes)
-                .flatMap(Function.identity())
-                .doOnComplete(latch::countDown)
-                .subscribe();
+        CompletableFuture<Void> f = merge(pipes).then().toFuture();
         Collections.reverse(connectables);
         connectables.forEach(ConnectableFlux::connect);
         connectables.clear();
         try {
-            latch.await();
+            f.get();
         } catch (InterruptedException e) {
-            // ignore
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            if(e.getCause() instanceof RuntimeException) {
+                throw (RuntimeException)e.getCause();
+            } else {
+                throw new RuntimeException(e.getCause());
+            }
         }
     }
 

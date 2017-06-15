@@ -2,16 +2,20 @@ package ten
 
 import static li.chee.reactive.plumber.Plumbing.*
 
-def printVoters = pipe {
+def p = tube {
     from range(0, 300) \
-    compose {f -> just(f.toIterable())} \
-    flatMapIterable { it } \
-    doOnNext show("print")
+    doOnNext show() \
+    compose fork() \
+    doOnNext { throw new IllegalStateException() } \
+    hide() \
+    doOnError { e -> throw new IllegalArgumentException(e) } \
+    compose fork() \
+    doOnNext show("again") \
 }
 
-def end = pipe {
-    from printVoters \
-    doOnNext show("end")
+try {
+    drain p
+} catch(Throwable t) {
+    println "caught"
+    t.printStackTrace()
 }
-
-drain end
