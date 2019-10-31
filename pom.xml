@@ -49,18 +49,6 @@
         <module>reactive-plumber-rxjava</module>
         <module>reactive-plumber-test</module>
     </modules>
-    <distributionManagement>
-        <repository>
-            <id>artifactory-releases</id>
-            <name>artifactory.pnet.ch-releases</name>
-            <url>http://artifactory.pnet.ch/artifactory/libs-release-local</url>
-        </repository>
-        <snapshotRepository>
-            <id>artifactory-snapshots</id>
-            <name>artifactory.pnet.ch-snapshots</name>
-            <url>http://artifactory.pnet.ch/artifactory/libs-snapshot-local</url>
-        </snapshotRepository>
-    </distributionManagement>
     <dependencies>
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
