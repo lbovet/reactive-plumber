@@ -63,7 +63,7 @@ abstract class Plumbing extends Flowable {
      * @param a closure
      * @return a Flowable
      */
-    static <T> Flowable<T> pipe(Closure<? extends Object<T>> closure) {
+    static <T> Flowable<T> pipe(Closure<? extends Object> closure) {
         def result = closure()
         result = normalize result
         publish(result)
