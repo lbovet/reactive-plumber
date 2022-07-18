@@ -5,7 +5,7 @@
     <parent>
         <artifactId>reactive-plumber</artifactId>
         <groupId>li.chee.reactive.plumber</groupId>
-        <version>0.24</version>
+        <version>0.25</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -25,7 +25,7 @@
         <dependency>
             <groupId>com.github.twalcari</groupId>
             <artifactId>java-prettify</artifactId>
-            <version>2.0.2</version>
+            <version>2.0.4</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.fxmisc.richtext</groupId>
@@ -36,7 +36,7 @@
         <dependency>
             <groupId>com.floreysoft</groupId>
             <artifactId>jmte</artifactId>
-            <version>4.0.0</version>
+            <version>7.0.0</version>
         </dependency>
         <dependency>
             <groupId>commons-cli</groupId>
